@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AICRA — AI Code Review & Learning Assistant (Python)</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg0:#090b10;--bg1:#0f1219;--bg2:#141820;--bg3:#1a1f2c;--bg4:#202538;--bg5:#262c42;
+  --border:#252b3d;--border2:#323a55;--border3:#424e72;
+  --t1:#eef0f8;--t2:#8a94b0;--t3:#4a5270;--t4:#2e3450;
+  --blue:#5b8ef0;--blue2:#3d6fd4;--purple:#9b6cf5;--purple2:#7a4fd4;
+  --green:#3dd6a3;--green2:#28b589;--amber:#f5a623;--amber2:#d4891a;
+  --red:#f05c5c;--pink:#e879a8;--cyan:#3dd4f5;
+  --font-mono:'JetBrains Mono',monospace;
+  --font-ui:'Syne',sans-serif;
+  --r4:4px;--r6:6px;--r8:8px;--r10:10px;--r12:12px;
+}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg0);color:var(--t1);font-family:var(--font-ui);font-size:13px;line-height:1.5;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg1);}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px;}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* TOPNAV */
+.topnav{display:flex;align-items:center;padding:0 18px;height:48px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;gap:2px;z-index:100;}
+.brand{display:flex;align-items:center;gap:9px;margin-right:20px;}
+.brand-icon{width:30px;height:30px;border-radius:var(--r8);background:var(--bg4);border:1px solid var(--border3);display:flex;align-items:center;justify-content:center;}
+.brand-icon svg{width:16px;height:16px;}
+.brand-name{font-size:15px;font-weight:800;color:var(--t1);letter-spacing:.5px;}
+.brand-name em{color:var(--blue);font-style:normal;}
+.brand-tag{font-size:9px;background:#080f20;border:1px solid var(--blue2);color:var(--blue);border-radius:3px;padding:2px 7px;font-weight:700;letter-spacing:.5px;margin-left:4px;}
+.nav-btn{padding:5px 14px;border-radius:var(--r6);font-size:12px;font-weight:600;color:var(--t3);background:transparent;border:none;cursor:pointer;font-family:var(--font-ui);transition:all .15s;letter-spacing:.2px;}
+.nav-btn:hover{color:var(--t2);background:var(--bg3);}
+.nav-btn.active{color:var(--t1);background:var(--bg4);border:1px solid var(--border2);}
+.nav-spacer{flex:1;}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.streak-chip{display:flex;align-items:center;gap:5px;background:#1e1607;border:1px solid #4a3010;border-radius:var(--r6);padding:4px 10px;font-size:11px;font-weight:700;color:var(--amber);}
+.xp-display{font-size:11px;font-weight:700;color:var(--purple);font-family:var(--font-mono);}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue2),var(--purple2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer;}
+
+.page{display:none;flex:1;overflow:hidden;}
+.page.active{display:flex;}
+
+/* HOME */
+#page-home{flex-direction:column;overflow-y:auto;background:var(--bg0);}
+.home-body{padding:28px 28px 32px;display:flex;flex-direction:column;gap:20px;max-width:1300px;width:100%;}
+
+/* Problem Statement Banner */
+.problem-banner{
+  background:linear-gradient(135deg,#080f20 0%,#0d0820 100%);
+  border:1px solid var(--border3);border-radius:var(--r12);
+  padding:18px 20px;display:flex;gap:16px;align-items:flex-start;
+}
+.pb-icon{width:44px;height:44px;border-radius:var(--r10);background:#0b1c3d;border:1px solid #2244aa;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.pb-content{flex:1;}
+.pb-label{font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;}
+.pb-title{font-size:16px;font-weight:800;margin-top:3px;}
+.pb-desc{font-size:12px;color:var(--t2);margin-top:5px;line-height:1.6;}
+.pb-tags{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.pb-tag{font-size:10px;padding:2px 9px;border-radius:var(--r4);font-weight:600;}
+
+.hero-row{display:flex;align-items:flex-start;gap:20px;}
+.hero-text{flex:1;}
+.hero-greeting{font-size:26px;font-weight:800;letter-spacing:.3px;line-height:1.2;}
+.hero-greeting span{color:var(--blue);}
+.hero-sub{font-size:13px;color:var(--t2);margin-top:6px;}
+.hero-stats{display:flex;gap:10px;margin-top:16px;}
+.hstat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:10px 16px;text-align:center;cursor:default;}
+.hstat-val{font-size:22px;font-weight:700;font-family:var(--font-mono);}
+.hstat-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-top:3px;}
+.xp-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:14px 18px;min-width:240px;}
+.xp-lv-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.xp-lv-badge{background:var(--bg5);border:1px solid var(--border3);border-radius:var(--r8);padding:5px 12px;font-size:12px;font-weight:700;color:var(--purple);}
+.xp-track{height:7px;background:var(--bg4);border-radius:4px;overflow:hidden;}
+.xp-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .5s;}
+.xp-nums{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:4px;font-family:var(--font-mono);}
+
+.section-hdr{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.1px;}
+.modules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.mod-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s;}
+.mod-card:hover{border-color:var(--border3);transform:translateY(-2px);}
+.mod-top{padding:16px 16px 8px;display:flex;align-items:flex-start;justify-content:space-between;}
+.mod-ico{width:42px;height:42px;border-radius:var(--r10);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.mod-badge{font-size:9px;font-weight:700;padding:3px 9px;border-radius:var(--r4);letter-spacing:.7px;}
+.mod-preview{margin:0 10px 8px;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r8);overflow:hidden;}
+.mp-bar{background:var(--bg3);height:20px;display:flex;align-items:center;padding:0 8px;gap:4px;}
+.mp-dot{width:6px;height:6px;border-radius:50%;}
+.mp-body{padding:8px 10px;font-family:var(--font-mono);font-size:10px;line-height:1.7;color:var(--t3);}
+.mp-line-sel{background:#26304d;border-left:2px solid var(--amber);padding-left:4px;display:block;color:var(--amber);}
+.mod-info{padding:10px 16px 14px;}
+.mod-title{font-size:14px;font-weight:700;}
+.mod-desc{font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.55;}
+.mod-foot{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.chip{font-size:10px;padding:2px 8px;border-radius:var(--r4);font-weight:600;}
+.open-btn{margin-left:auto;font-size:11px;padding:5px 13px;border-radius:var(--r6);font-weight:700;cursor:pointer;font-family:var(--font-ui);border:1px solid;transition:opacity .15s;}
+.open-btn:hover{opacity:.8;}
+
+.qactions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.qa-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:13px;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:border-color .15s;}
+.qa-btn:hover{border-color:var(--border3);}
+.qa-ico{width:30px;height:30px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.qa-label{font-size:12px;font-weight:600;}
+.qa-sub{font-size:10px;color:var(--t3);}
+
+.activity-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);overflow:hidden;}
+.ac-head{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);}
+.ac-title{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;}
+.ac-link{margin-left:auto;font-size:11px;color:var(--blue);cursor:pointer;}
+.ac-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);}
+.ac-row:last-child{border-bottom:none;}
+.ac-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ac-text{font-size:11.5px;flex:1;font-family:var(--font-mono);}
+.ac-time{font-size:10px;color:var(--t3);}
+
+/* EDITOR */
+#page-editor{flex-direction:column;}
+.editor-topbar{display:flex;align-items:center;padding:0 14px;height:38px;background:var(--bg2);border-bottom:1px solid var(--border);gap:6px;flex-shrink:0;}
+.file-tab{padding:4px 12px;font-size:12px;color:var(--t3);border-radius:var(--r4);cursor:pointer;font-family:var(--font-mono);transition:all .12s;}
+.file-tab.active{background:var(--bg4);color:var(--t1);}
+.file-tab:hover:not(.active){color:var(--t2);}
+.etb-spacer{flex:1;}
+.action-btn{padding:5px 12px;border-radius:var(--r6);font-size:11px;font-weight:700;cursor:pointer;border:1px solid;font-family:var(--font-ui);letter-spacing:.3px;transition:opacity .15s;}
+.action-btn:hover{opacity:.85;}
+.btn-run{background:#0e2412;border-color:#2d6a3a;color:var(--green);}
+.btn-validate{background:var(--bg3);border-color:var(--border2);color:var(--t2);}
+.btn-fix{background:#221805;border-color:var(--amber2);color:var(--amber);}
+.btn-review{background:#0d1e42;border-color:var(--blue2);color:var(--blue);}
+.btn-learn{background:#1a0c3d;border-color:var(--purple2);color:var(--purple);}
+.editor-main{
+  display:flex;
+  flex:1;
+  overflow:hidden;
+  justify-content:center;
+  gap:10px;
+  position:relative;
+}
+/* File sidebar */
+.file-sidebar{width:175px;background:var(--bg1);border-right:1px solid var(--border);padding:10px 0;overflow-y:auto;flex-shrink:0;}
+.fsb-section{font-size:10px;font-weight:700;color:var(--t4);letter-spacing:1.1px;padding:6px 12px 6px;text-transform:uppercase;}
+.fsb-item{display:flex;align-items:center;gap:7px;padding:5px 12px;font-size:11.5px;color:var(--t3);cursor:pointer;font-family:var(--font-mono);transition:all .12s;border-left:2px solid transparent;}
+.fsb-item:hover{color:var(--t2);background:var(--bg2);}
+.fsb-item.active{color:var(--t1);background:var(--bg3);border-left-color:var(--blue);}
+
+/* Code editor */
+.code-editor-wrap{
+  width:55%;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+}
+.ced-header{display:flex;align-items:center;padding:5px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);gap:8px;flex-shrink:0;}
+.sel-line-badge{margin-left:auto;display:flex;align-items:center;gap:5px;background:#201505;border:1px solid var(--amber2);border-radius:var(--r4);padding:3px 9px;font-size:10px;color:var(--amber);font-weight:700;}
+.code-area{display:flex;flex:1;overflow:hidden;}
+.line-gutter{background:var(--bg1);width:42px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 0;overflow:hidden;}
+.lg{text-align:right;padding:0 10px;font-size:11px;font-family:var(--font-mono);color:var(--t4);line-height:1.9;cursor:pointer;transition:color .1s;}
+.lg:hover{color:var(--t2);}
+.lg.sel{color:var(--amber);font-weight:700;}
+.code-scroll{flex:1;overflow:auto;background:var(--bg1);padding:12px 0;}
+.cline{padding:0 16px;font-family:var(--font-mono);font-size:12px;line-height:1.9;white-space:pre;cursor:pointer;display:flex;align-items:center;transition:background .1s;}
+.cline:hover{background:var(--bg2);}
+.cline.selected{background:#26304d;border-left:3px solid var(--amber);padding-left:13px;}
+.sel-arrow{font-size:10px;color:var(--amber);opacity:.6;margin-left:8px;font-style:italic;}
+.cline.err-line{background:#1e0a0a;border-left:3px solid var(--red);padding-left:13px;}
+.kw{color:#c792ea;}.fn{color:#82aaff;}.str{color:#c3e88d;}.num{color:#f78c6c;}.cmt{color:#4e6070;}.type{color:#ffcb6b;}.op{color:#89ddff;}.var{color:var(--t1);}
+
+/* AI Panel */
+.ai-panel{
+  width:25%;
+  min-width:260px;
+  background:var(--bg1);
+  border-left:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+}
+.aip-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.aip-title{font-size:12px;font-weight:700;flex:1;}
+.status-badge{font-size:9px;padding:2px 8px;border-radius:var(--r4);font-weight:700;letter-spacing:.5px;}
+.sb-active{background:#0a2014;color:var(--green);border:1px solid #1e5430;}
+.sb-idle{background:var(--bg3);color:var(--t3);border:1px solid var(--border);}
+.sb-loading{background:#0d1e42;color:var(--blue);border:1px solid var(--blue2);}
+.agents-section{padding:10px;display:flex;flex-direction:column;gap:7px;border-bottom:1px solid var(--border);}
+.agent-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:9px 11px;}
+.agent-row{display:flex;align-items:center;gap:8px;}
+.agent-ico{width:28px;height:28px;border-radius:var(--r6);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.aic1{background:#0b1c3d;border:1px solid #2244aa;}
+.aic2{background:#1a0c3d;border:1px solid #6633cc;}
+.aic3{background:#261604;border:1px solid #8a5500;}
+.agent-name{font-size:11px;font-weight:700;flex:1;}
+.agent-stat{font-size:9px;padding:2px 7px;border-radius:3px;font-weight:700;}
+.as-done{background:#0a2014;color:var(--green);}
+.as-run{background:#201404;color:var(--amber);}
+.as-idle{background:var(--bg3);color:var(--t3);}
+.agent-detail{font-size:10.5px;color:var(--t2);margin-top:5px;line-height:1.5;}
+.mini-bar-row{display:flex;align-items:center;gap:6px;margin-top:5px;}
+.mini-bar{flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.mini-fill{height:100%;border-radius:2px;}
+.mf-green{background:var(--green);}
+.mf-amber{background:var(--amber);}
+.mf-red{background:var(--red);}
+
+/* Output / AI panels with tabs */
+.panel-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);}
+.ptab{padding:7px 12px;font-size:11px;font-weight:600;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.ptab:hover{color:var(--t2);}
+.ptab.active{color:var(--t1);border-bottom-color:var(--blue);}
+.ptab-purple.active{border-bottom-color:var(--purple);color:var(--purple);}
+.panel-content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.tab-pane{display:none;flex:1;flex-direction:column;overflow-y:auto;padding:12px;}
+.tab-pane.active{display:flex;}
+
+.output-section{
+
+  position:absolute;
+
+  bottom:20px;
+  left:45%;
+
+  transform:translateX(-50%);
+
+  width:50%;
+  height:180px;
+
+  background:var(--bg1);
+  border:1px solid var(--border2);
+  border-radius:10px;
+
+  padding:12px;
+  overflow:auto;
+
+  z-index:50;
+}
+.out-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;}
+.diff-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:10px 12px;font-family:var(--font-mono);font-size:11.5px;}
+.diff-sublabel{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;}
+.diff-old{color:var(--red);background:#190606;padding:6px 9px;border-radius:var(--r4);margin-bottom:5px;font-family:var(--font-mono);font-size:11px;}
+.diff-new{color:var(--green);background:#041410;padding:6px 9px;border-radius:var(--r4);font-family:var(--font-mono);font-size:11px;}
+.explain-box{background:#041410;border:1px solid #1c5c38;border-radius:var(--r8);padding:10px 12px;font-size:11.5px;color:#6ee7b7;line-height:1.6;}
+.btn-accept{background:#0a2014;border:1px solid #2d6a3a;color:var(--green);border-radius:var(--r6);padding:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-ui);flex:1;transition:opacity .15s;}
+.btn-accept:hover{opacity:.8;}
+.btn-reject{background:var(--bg2);border:1px solid var(--border2);color:var(--t2);border-radius:var(--r6);padding:8px 14px;font-size:11px;cursor:pointer;font-family:var(--font-ui);transition:opacity .15s;}
+.btn-reject:hover{opacity:.8;}
+.run-output{background:var(--bg0);border:1px solid var(--border);border-radius:var(--r8);padding:10px 12px;font-family:var(--font-mono);font-size:11px;color:var(--green);line-height:1.7;}
+
+/* Learning Module Panel */
+.learn-panel{display:flex;flex-direction:column;gap:10px;}
+.learn-header{display:flex;align-items:center;gap:8px;padding:8px 0;}
+.learn-title-txt{font-size:13px;font-weight:700;color:var(--purple);}
+.learn-badge{font-size:9px;padding:2px 7px;border-radius:var(--r4);background:#1a0c3d;color:var(--purple);border:1px solid var(--purple2);font-weight:700;}
+.concept-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);overflow:hidden;}
+.cc-header{background:var(--bg3);padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
+.cc-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;}
+.cc-body{padding:12px;}
+.cc-text{font-size:11.5px;color:var(--t2);line-height:1.7;}
+.cc-text code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:10.5px;color:var(--blue);}
+.cc-text strong{color:var(--t1);}
+.example-block{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r8);padding:10px 12px;margin-top:8px;font-family:var(--font-mono);font-size:11px;line-height:1.8;}
+.ex-bad{color:var(--red);}
+.ex-good{color:var(--green);}
+.ex-cmt{color:var(--t3);}
+.quiz-card{background:#0d0820;border:1px solid var(--purple2);border-radius:var(--r10);padding:12px;}
+.quiz-q{font-size:12px;color:var(--t1);margin-bottom:10px;font-weight:600;}
+.quiz-opt{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:8px 12px;font-size:11px;cursor:pointer;margin-bottom:5px;transition:border-color .15s;display:flex;align-items:center;gap:8px;}
+.quiz-opt:hover:not(.qo-right):not(.qo-wrong){border-color:var(--border2);background:var(--bg4);}
+.qo-right{border-color:var(--green);background:#030e08;color:var(--green);}
+.qo-wrong{border-color:var(--red);background:#0e0303;color:var(--red);}
+.quiz-feedback{padding:10px;border-radius:var(--r8);font-size:11.5px;margin-top:8px;line-height:1.6;display:none;}
+.qf-correct{background:#030e08;border:1px solid #235c38;color:#6ee7b7;}
+.qf-wrong{background:#0e0303;border:1px solid #662222;color:#f7a0a0;}
+.learn-progress{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:10px 12px;}
+.lp-title{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;}
+.lp-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);}
+.lp-item:last-child{border-bottom:none;}
+.lp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.lp-name{font-size:11px;flex:1;}
+.lp-status{font-size:10px;font-weight:600;}
+.ai-loading-box{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r10);padding:16px;text-align:center;}
+.ai-spinner{width:32px;height:32px;border:2px solid var(--bg5);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Statusbar */
+.statusbar{display:flex;align-items:center;padding:0 14px;height:22px;background:#070910;border-top:1px solid var(--border);gap:16px;flex-shrink:0;}
+.sb{font-size:10px;color:var(--t3);display:flex;align-items:center;gap:4px;}
+.sb-dot{width:5px;height:5px;border-radius:50%;background:var(--green);}
+
+/* DASHBOARD */
+#page-dashboard{flex-direction:column;overflow-y:auto;background:var(--bg0);}
+.dash-body{padding:24px 28px;display:flex;flex-direction:column;gap:16px;max-width:1300px;width:100%;}
+.dash-hdr{display:flex;align-items:baseline;justify-content:space-between;}
+.dash-title{font-size:20px;font-weight:800;}
+.dash-sub{font-size:12px;color:var(--t2);}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:14px 16px;}
+.stat-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.9px;font-weight:600;}
+.stat-val{font-size:28px;font-weight:700;font-family:var(--font-mono);margin-top:4px;}
+.stat-delta{font-size:11px;color:var(--green);margin-top:4px;}
+.stat-delta.down{color:var(--red);}
+.charts-row{display:grid;grid-template-columns:3fr 2fr;gap:12px;}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:14px 16px;}
+.chart-title{font-size:12px;font-weight:700;margin-bottom:14px;}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:90px;}
+.bc-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.bc-bar{width:100%;border-radius:4px 4px 0 0;transition:height .3s;}
+.bc-lbl{font-size:9px;color:var(--t3);font-family:var(--font-mono);}
+.bc-val{font-size:9px;color:var(--t2);font-family:var(--font-mono);}
+.donut-wrap{display:flex;align-items:center;gap:14px;}
+.donut-legend{display:flex;flex-direction:column;gap:8px;}
+.dl-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--t2);}
+.dl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.agents-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.agent-perf-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:14px 16px;}
+.apc-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.apc-icon{width:30px;height:30px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.perf-bar{height:5px;background:var(--bg4);border-radius:3px;margin-top:5px;overflow:hidden;}
+.perf-fill{height:100%;border-radius:3px;}
+.activity-table{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);overflow:hidden;}
+.at-head{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);}
+.at-title{font-size:12px;font-weight:700;}
+table.dash-tbl{width:100%;border-collapse:collapse;}
+.dash-tbl th{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600;}
+.dash-tbl td{padding:8px 14px;color:var(--t2);border-bottom:1px solid var(--bg3);font-size:11.5px;}
+.dash-tbl tr:last-child td{border-bottom:none;}
+.dash-tbl tr:hover td{background:var(--bg3);}
+.status-pill{font-size:10px;padding:2px 9px;border-radius:20px;font-weight:700;}
+.sp-ok{background:#0a2014;color:var(--green);}
+.sp-warn{background:#1e1404;color:var(--amber);}
+.sp-err{background:#1e0606;color:var(--red);}
+
+/* GAME */
+#page-game{flex-direction:row;overflow:hidden;}
+.world-sidebar{width:255px;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.ws-header{padding:14px 14px 10px;border-bottom:1px solid var(--border);}
+.ws-title{font-size:13px;font-weight:700;}
+.ws-sub{font-size:10px;color:var(--t3);margin-top:2px;}
+.ws-body{padding:8px 8px;overflow-y:auto;flex:1;}
+.world-item{border-radius:var(--r10);margin-bottom:4px;cursor:pointer;transition:border-color .15s;}
+.world-item.w-done{border:1px solid #1c4c30;background:#03100a;}
+.world-item.w-active{border:1px solid #5a33b0;background:#100820;}
+.world-item.w-locked{border:1px solid var(--border);background:var(--bg2);opacity:.45;cursor:default;}
+.wi-inner{display:flex;align-items:center;gap:10px;padding:9px 11px;}
+.wi-num{width:28px;height:28px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.wn-done{background:#0a2014;color:var(--green);border:1px solid #235c38;}
+.wn-active{background:#180e38;color:#c084fc;border:1px solid #5a33b0;}
+.wn-locked{background:var(--bg3);color:var(--t3);}
+.wi-name{font-size:12px;font-weight:600;}
+.wi-desc{font-size:10px;color:var(--t3);margin-top:2px;}
+.wi-prog{display:flex;align-items:center;gap:5px;margin-top:5px;}
+.wip-bar{flex:1;height:3px;border-radius:2px;background:var(--bg4);}
+.wip-fill{height:100%;border-radius:2px;}
+.wip-txt{font-size:9px;color:var(--t3);font-family:var(--font-mono);min-width:22px;text-align:right;}
+.mission-dots{padding:4px 11px 9px 49px;display:flex;gap:4px;}
+.md{width:14px;height:14px;border-radius:var(--r4);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;}
+.md-done{background:#0a2014;color:var(--green);border:1px solid #1c5030;}
+.md-active{background:#180e38;color:#c084fc;border:1px solid #5a33b0;}
+.md-lock{background:var(--bg3);color:var(--t3);}
+.game-arena{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.ga-header{display:flex;align-items:center;gap:12px;padding:10px 18px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.ga-bc{font-size:11px;color:var(--t3);font-family:var(--font-mono);}
+.ga-bc span{color:var(--purple);}
+.diff-chip{font-size:9px;padding:3px 9px;border-radius:var(--r4);font-weight:700;}
+.dc-normal{background:#160e30;color:#c084fc;border:1px solid #5a33b0;}
+.dc-hard{background:#1e0606;color:var(--red);border:1px solid #882222;}
+.timer-chip{display:flex;align-items:center;gap:5px;background:#1e1404;border:1px solid var(--amber2);border-radius:var(--r6);padding:4px 10px;font-size:12px;font-weight:700;color:var(--amber);font-family:var(--font-mono);}
+.combo-chip{font-size:11px;color:var(--t3);}
+.hp-display{display:flex;align-items:center;gap:5px;}
+.hp-hearts{font-size:12px;letter-spacing:2px;}
+.ga-body{flex:1;display:flex;overflow:hidden;}
+.ga-main{flex:1;padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+.ga-side{width:220px;padding:12px;background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;gap:10px;overflow-y:auto;}
+.mission-banner{background:var(--bg2);border:1px solid #5a33b0;border-radius:var(--r10);padding:14px 16px;display:flex;align-items:flex-start;gap:14px;}
+.mission-icon{width:46px;height:46px;border-radius:var(--r10);background:#160e30;border:1px solid #5a33b0;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.mission-lbl{font-size:10px;font-weight:700;color:#c084fc;text-transform:uppercase;letter-spacing:.8px;}
+.mission-name{font-size:15px;font-weight:700;margin-top:3px;}
+.mission-desc{font-size:11.5px;color:var(--t2);margin-top:5px;line-height:1.5;}
+.mission-rewards{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;}
+.rew-chip{font-size:10px;padding:3px 10px;border-radius:var(--r4);font-weight:700;}
+.challenge-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);overflow:hidden;}
+.cc-head{background:var(--bg3);padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
+.cc-title{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;}
+.bug-badge{font-size:9px;padding:2px 8px;border-radius:var(--r4);background:#1e0606;color:var(--red);border:1px solid #662222;font-weight:700;}
+.cc-code{padding:12px 14px;font-family:var(--font-mono);font-size:11.5px;line-height:1.9;}
+.bug-line{background:#1e0606;border-left:3px solid var(--red);padding-left:5px;display:block;}
+.bug-underline{text-decoration:underline;text-decoration-color:var(--red);text-decoration-style:wavy;}
+.fix-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);}
+.fc-head{padding:9px 14px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;}
+.fc-options{padding:8px 10px;display:flex;flex-direction:column;gap:6px;}
+.fix-opt{border:1px solid var(--border);border-radius:var(--r8);padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:border-color .15s,background .15s;}
+.fix-opt:hover:not(.fo-correct):not(.fo-wrong){border-color:var(--border2);background:var(--bg3);}
+.fo-correct{border-color:#235c38;background:#030e08;}
+.fo-wrong{border-color:#662222;background:#0e0303;}
+.fix-key{width:22px;height:22px;border-radius:var(--r4);background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:var(--font-mono);flex-shrink:0;}
+.fo-correct .fix-key{background:#0a2014;border-color:#235c38;color:var(--green);}
+.fo-wrong .fix-key{background:#1e0606;border-color:#662222;color:var(--red);}
+.fix-text{font-size:11px;font-family:var(--font-mono);flex:1;}
+.fix-result{font-size:11px;font-weight:700;margin-left:auto;flex-shrink:0;}
+.gs-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:10px 12px;}
+.gs-title{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;}
+.score-display{display:flex;justify-content:space-between;margin-bottom:6px;}
+.sd-val{font-size:20px;font-weight:700;font-family:var(--font-mono);}
+.sd-lbl{font-size:10px;color:var(--t3);margin-top:2px;}
+.combo-bar{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:6px;}
+.combo-fill{height:100%;border-radius:3px;background:var(--amber);transition:width .3s;}
+.inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.inv-slot{aspect-ratio:1;border:1px solid var(--border);border-radius:var(--r8);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:border-color .15s;}
+.inv-slot:hover{border-color:var(--border2);}
+.inv-slot.inv-filled{border-color:var(--border2);background:var(--bg4);}
+.inv-slot.inv-active{border-color:var(--purple);background:#160e30;}
+.gs-hint{font-size:11px;color:var(--t2);line-height:1.6;}
+.gs-hint code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:10px;color:var(--blue);}
+.skill-row-g{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.sr-icon{width:22px;height:22px;border-radius:var(--r6);display:flex;align-items:center;justify-content:center;font-size:11px;}
+.sr-bar{flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.sr-fill{height:100%;border-radius:2px;}
+.lb-row-g{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid var(--border);}
+.lb-row-g:last-child{border-bottom:none;}
+.lb-rank-g{font-size:10px;color:var(--t3);width:14px;font-family:var(--font-mono);}
+.lb-name-g{font-size:11px;flex:1;}
+.lb-score-g{font-size:10px;font-family:var(--font-mono);color:var(--amber);}
+.me-lb{background:var(--bg4);border-radius:var(--r4);padding:3px 6px;margin:0 -6px;}
+.gi-panel{width:240px;background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.gi-section{padding:12px 14px;border-bottom:1px solid var(--border);}
+.mission-step-dots{display:flex;gap:5px;flex-wrap:wrap;}
+.msd{width:30px;height:30px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.msd-done{background:#0a2014;border:1px solid #235c38;color:var(--green);}
+.msd-active{background:#160e30;border:1px solid #5a33b0;color:#c084fc;}
+.msd-lock{background:var(--bg3);border:1px solid var(--border);color:var(--t3);}
+
+/* Game Learn Panel */
+.game-learn-box{background:#0d0820;border:1px solid var(--purple2);border-radius:var(--r10);padding:12px;}
+.glb-title{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;}
+.glb-body{font-size:11px;color:var(--t2);line-height:1.7;}
+.glb-body code{background:var(--bg4);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:10px;color:var(--cyan);}
+.glb-body strong{color:var(--t1);}
+
+/* Toast & modal */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r10);padding:12px 16px;font-size:12px;color:var(--t1);transform:translateY(80px);opacity:0;transition:all .3s;z-index:1000;max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.toast-success{border-color:#235c38;background:#030e08;}
+.toast.toast-error{border-color:#662222;background:#0e0303;}
+.toast.toast-info{border-color:var(--blue2);background:#080e20;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r12);padding:24px;max-width:460px;width:90%;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:8px;}
+.modal-body{font-size:12.5px;color:var(--t2);line-height:1.6;margin-bottom:16px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeIn .3s ease forwards;}
+.animate-pulse{animation:pulse 1.5s infinite;}
+.flex{display:flex;}.flex-col{flex-direction:column;}.items-center{align-items:center;}
+.gap-6{gap:6px;}.gap-8{gap:8px;}.fw700{font-weight:700;}.mono{font-family:var(--font-mono);}
+.ml-auto{margin-left:auto;}.mt4{margin-top:4px;}.text-green{color:var(--green);}.text-amber{color:var(--amber);}
+.text-red{color:var(--red);}.text-purple{color:var(--purple);}.text-blue{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#5b8ef0" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="#5b8ef0" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <span class="brand-name">AI<em>CRA</em></span>
+    <span class="brand-tag">Python Only</span>
+  </div>
+  <button class="nav-btn active" onclick="showPage('home')">Home</button>
+  <button class="nav-btn" onclick="showPage('editor')">Editor</button>
+  <button class="nav-btn" onclick="showPage('dashboard')">Dashboard</button>
+  <button class="nav-btn" onclick="showPage('game')">Game</button>
+  <div class="nav-spacer"></div>
+  <div class="nav-right">
+    <div class="streak-chip">🔥 <span id="streak-count">7</span> day streak</div>
+    <div class="xp-display" id="xp-display">4,820 XP</div>
+    <div class="user-avatar">AK</div>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+<div class="home-body">
+
+  <!-- Problem Statement Banner -->
+  <div class="problem-banner">
+    <div class="pb-icon">🎯</div>
+    <div class="pb-content">
+      <div class="pb-label">Project Problem Statement</div>
+      <div class="pb-title">AI-Powered Code Review & Learning Assistant for Python</div>
+      <div class="pb-desc">
+        Python developers frequently commit fragile, insecure, or poorly-typed code due to insufficient automated feedback and no structured way to learn from their mistakes.
+        AICRA addresses this by providing <strong>real-time AI code review</strong> using three intelligent agents, <strong>multi-line contextual corrections</strong> stored in a Python-backed SQLite database,
+        and a <strong>gamified learning module</strong> that adapts challenges dynamically based on detected error patterns. This ensures developers don't just fix bugs — they understand and remember why.
+      </div>
+      <div class="pb-tags">
+        <span class="pb-tag" style="background:#080f20;color:var(--blue);border:1px solid var(--blue2)">Python 3.11</span>
+        <span class="pb-tag" style="background:#0a2014;color:var(--green);border:1px solid #235c38">SQLite DB</span>
+        <span class="pb-tag" style="background:#0d0820;color:var(--purple);border:1px solid var(--purple2)">Gamified Learning</span>
+        <span class="pb-tag" style="background:#201404;color:var(--amber);border:1px solid var(--amber2)">3 AI Agents</span>
+        <span class="pb-tag" style="background:#1e0606;color:var(--red);border:1px solid #882222">Security Analysis</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero-row">
+    <div class="hero-text">
+      <div class="hero-greeting">Good morning, <span>Alex</span> 👋</div>
+      <div class="hero-sub">3 Python files pending review · Game Level 4 active · 180 XP to next level</div>
+      <div class="hero-stats">
+        <div class="hstat"><div class="hstat-val" style="color:var(--blue)" id="h-reviewed">247</div><div class="hstat-lbl">Reviewed</div></div>
+        <div class="hstat"><div class="hstat-val" style="color:var(--green)" id="h-fixed">1,084</div><div class="hstat-lbl">Lines Fixed</div></div>
+        <div class="hstat"><div class="hstat-val" style="color:var(--amber)" id="h-fragility">0.34</div><div class="hstat-lbl">Avg Fragility</div></div>
+        <div class="hstat"><div class="hstat-val" style="color:var(--purple)">Lv 12</div><div class="hstat-lbl">Game Rank</div></div>
+      </div>
+    </div>
+    <div class="xp-card">
+      <div class="xp-lv-row">
+        <div class="xp-lv-badge">Lv 12</div>
+        <div><div style="font-size:12px;font-weight:600">Code Quality Expert</div><div style="font-size:10px;color:var(--t3);margin-top:2px">4,820 / 5,000 XP</div></div>
+      </div>
+      <div class="xp-track"><div class="xp-fill" style="width:96.4%"></div></div>
+      <div class="xp-nums"><span>4,820</span><span>5,000</span></div>
+    </div>
+  </div>
+
+  <!-- Modules -->
+  <div class="section-hdr">Your Modules</div>
+  <div class="modules-grid">
+    <div class="mod-card" onclick="showPage('editor')">
+      <div class="mod-top">
+        <div class="mod-ico" style="background:#0b1c3d;border:1px solid #2244aa;">💻</div>
+        <div class="mod-badge" style="background:#0b1c3d;color:#82aaff;border:1px solid #2244aa;">EDITOR + LEARN</div>
+      </div>
+      <div class="mod-preview">
+        <div class="mp-bar"><div class="mp-dot" style="background:#f05c5c"></div><div class="mp-dot" style="background:#f5a623"></div><div class="mp-dot" style="background:#3dd6a3"></div><span style="font-size:9px;color:var(--t3);margin-left:4px;font-family:var(--font-mono)">code-review.py</span></div>
+        <div class="mp-body"><span style="color:#c792ea">def</span> <span style="color:#82aaff">analyze_code</span>(code: <span style="color:#ffcb6b">str</span>):<br><span class="mp-line-sel">    results = get_results(code, validate=<span style="color:#c792ea">False</span>)</span><span>    <span style="color:#c792ea">if not</span> results: <span style="color:#c792ea">return</span> []</span><br><span>    <span style="color:#c792ea">return</span> <span style="color:#82aaff">filtered</span>(results)</span></div>
+      </div>
+      <div class="mod-info">
+        <div class="mod-title">Code Editor + Learning</div>
+        <div class="mod-desc">AI reviews entire Python files, fixes multiple issues, then auto-generates a learning module explaining each concept. Powered by real Claude AI.</div>
+        <div class="mod-foot">
+          <span class="chip" style="background:#0b1c3d;color:#82aaff">3 agents</span>
+          <span class="chip" style="background:#0d0820;color:var(--purple)">📚 Learn</span>
+          <button class="open-btn" style="background:#0b1c3d;border-color:#2244aa;color:#82aaff">Open →</button>
+        </div>
+      </div>
+    </div>
+    <div class="mod-card" onclick="showPage('dashboard')">
+      <div class="mod-top">
+        <div class="mod-ico" style="background:#041410;border:1px solid #1c5030;">📊</div>
+        <div class="mod-badge" style="background:#041410;color:var(--green);border:1px solid #1c5030;">ANALYTICS</div>
+      </div>
+      <div class="mod-preview">
+        <div class="mp-bar"><div class="mp-dot" style="background:var(--t3)"></div><div class="mp-dot" style="background:var(--t3)"></div><div class="mp-dot" style="background:var(--t3)"></div><span style="font-size:9px;color:var(--t3);margin-left:4px;font-family:var(--font-mono)">dashboard</span></div>
+        <div class="mp-body"><div style="display:flex;gap:4px;align-items:flex-end;height:32px;margin-bottom:4px;"><div style="flex:1;background:var(--blue);opacity:.5;height:40%;border-radius:2px 2px 0 0;"></div><div style="flex:1;background:var(--blue);opacity:.65;height:55%;border-radius:2px 2px 0 0;"></div><div style="flex:1;background:var(--blue);opacity:.85;height:72%;border-radius:2px 2px 0 0;"></div><div style="flex:1;background:var(--blue);opacity:.7;height:48%;border-radius:2px 2px 0 0;"></div><div style="flex:1;background:var(--blue);height:92%;border-radius:2px 2px 0 0;"></div><div style="flex:1;background:var(--blue);opacity:.45;height:35%;border-radius:2px 2px 0 0;"></div><div style="flex:1;background:var(--green);height:62%;border-radius:2px 2px 0 0;"></div></div><span style="color:var(--green);font-size:10px">247 reviews ↑18% · 1,084 fixes ↑31%</span></div>
+      </div>
+      <div class="mod-info">
+        <div class="mod-title">Dashboard</div>
+        <div class="mod-desc">Track review activity, issue patterns, agent accuracy and weekly Python improvement stats. Stored in SQLite DB.</div>
+        <div class="mod-foot"><span class="chip" style="background:#041410;color:var(--green)">↑ 18% this week</span><button class="open-btn" style="background:#041410;border-color:#1c5030;color:var(--green)">Open →</button></div>
+      </div>
+    </div>
+    <div class="mod-card" onclick="showPage('game')">
+
+  <div class="mod-top">
+    <div class="mod-ico" style="background:#160e30;border:1px solid #5a33b0">
+      🎮
+    </div>
+    <span class="mod-badge" style="background:#160e30;color:#c084fc;border:1px solid #5a33b0">
+      GAME
+    </span>
+  </div>
+
+  <div class="mod-preview">
+    <div class="mp-bar">
+      <div class="mp-dot" style="background:#ff5f56"></div>
+      <div class="mp-dot" style="background:#ffbd2e"></div>
+      <div class="mp-dot" style="background:#27c93f"></div>
+      <span style="margin-left:6px;font-size:10px;color:#888">runner-game</span>
+    </div>
+
+    <div class="mp-body">
+      <span>score += 10</span><br>
+      <span>if correct:</span><br>
+      <span class="mp-line-sel">startGame()</span>
+    </div>
+  </div>
+
+  <div class="mod-info">
+    <div class="mod-title">Python Runner Game</div>
+
+    <div class="mod-desc">
+      Play the AI learning runner.  
+      Answer quiz → start game → earn XP → improve coding skills.
+    </div>
+
+    <div class="mod-foot">
+
+      <span class="chip" style="background:#160e30;color:#c084fc">
+        Quiz + Game
+      </span>
+
+      <button class="open-btn"
+        style="background:#160e30;border-color:#5a33b0;color:#c084fc"
+        onclick="showPage('game')">
+        Open →
+      </button>
+
+    </div>
+  </div>
+
+</div>
+    <div class="mod-card" onclick="showPage('game')">
+      <div class="mod-top">
+        <div class="mod-ico" style="background:#160e30;border:1px solid #5a33b0;">🎮</div>
+        <div class="mod-badge" style="background:#160e30;color:#c084fc;border:1px solid #5a33b0;">CODE QUEST</div>
+      </div>
+      <div class="mod-preview">
+        <div class="mp-bar"><div class="mp-dot" style="background:var(--t3)"></div><div class="mp-dot" style="background:var(--t3)"></div><div class="mp-dot" style="background:var(--t3)"></div><span style="font-size:9px;color:var(--t3);margin-left:4px;font-family:var(--font-mono)">code-quest</span></div>
+        <div class="mp-body">
+          <div style="display:flex;align-items:center;gap:6px;margin:2px 0"><div style="width:18px;height:18px;border-radius:50%;background:#0a2014;border:1px solid #235c38;color:var(--green);font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700">✓</div><div style="flex:1;height:3px;border-radius:2px;background:var(--green)"></div><span style="font-size:9px;color:var(--green)">Done</span></div>
+          <div style="display:flex;align-items:center;gap:6px;margin:2px 0"><div style="width:18px;height:18px;border-radius:50%;background:#160e30;border:1px solid #5a33b0;color:#c084fc;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700">4</div><div style="flex:1;height:3px;border-radius:2px;background:var(--bg4);overflow:hidden"><div style="width:60%;height:100%;background:var(--purple)"></div></div><span style="font-size:9px;color:var(--purple)">60%</span></div>
+        </div>
+      </div>
+      <div class="mod-info">
+        <div class="mod-title">Code Quest Game</div>
+        <div class="mod-desc">Adventure-style Python bug-hunting. Challenges adapt based on your review history. AI explains every answer with Python-specific context.</div>
+        <div class="mod-foot"><span class="chip" style="background:#160e30;color:#c084fc">Level 4 active</span><span class="chip" style="background:#201505;color:var(--amber)">+320 XP</span><button class="open-btn" style="background:#160e30;border-color:#5a33b0;color:#c084fc">Play →</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="section-hdr">Quick Actions</div>
+  <div class="qactions-grid">
+    <div class="qa-btn" onclick="showPage('editor');setTimeout(()=>runCode(),400)"><div class="qa-ico" style="background:#0b1c3d;border:1px solid #2244aa;">▶️</div><div class="qa-label">Run Code</div><div class="qa-sub">Execute Python file</div></div>
+    <div class="qa-btn" onclick="showPage('editor');setTimeout(()=>triggerReview(),400)"><div class="qa-ico" style="background:#041410;border:1px solid #1c5030;">🤖</div><div class="qa-label">AI Review</div><div class="qa-sub">Full file analysis (AI)</div></div>
+    <div class="qa-btn" onclick="showPage('editor');setTimeout(()=>openLearnTab(),400)"><div class="qa-ico" style="background:#1a0c3d;border:1px solid var(--purple2);">📚</div><div class="qa-label">Learning Module</div><div class="qa-sub">Study detected issues</div></div>
+    <div class="qa-btn" onclick="showPage('game')"><div class="qa-ico" style="background:#160e30;border:1px solid #5a33b0;">🎮</div><div class="qa-label">Resume Game</div><div class="qa-sub">Level 4 · Mission 3</div></div>
+  </div>
+
+  <!-- Recent activity -->
+  <div class="activity-card">
+    <div class="ac-head"><span class="ac-title">Recent Activity</span><span class="ac-link">View all →</span></div>
+    <div id="activity-feed">
+      <div class="ac-row"><div class="ac-dot" style="background:var(--green)"></div><div class="ac-text">auth.py · Line 42 · <span style="color:var(--t1)">Missing null check fixed</span></div><span class="status-pill sp-ok">Fixed</span><div class="ac-time" style="margin-left:8px">2m ago</div></div>
+      <div class="ac-row"><div class="ac-dot" style="background:var(--purple)"></div><div class="ac-text">📚 Learning · <span style="color:var(--t1)">Exception Handling module completed · +80 XP</span></div><span class="status-pill" style="background:#160e30;color:#c084fc">Learned</span><div class="ac-time" style="margin-left:8px">18m ago</div></div>
+      <div class="ac-row"><div class="ac-dot" style="background:var(--red)"></div><div class="ac-text">api.py · Line 73 · <span style="color:var(--t1)">SQL injection risk detected</span></div><span class="status-pill sp-err">Critical</span><div class="ac-time" style="margin-left:8px">24m ago</div></div>
+      <div class="ac-row"><div class="ac-dot" style="background:var(--amber)"></div><div class="ac-text">models.py · Line 118 · <span style="color:var(--t1)">Bare except · fragility 0.71</span></div><span class="status-pill sp-warn">Pending</span><div class="ac-time" style="margin-left:8px">31m ago</div></div>
+    </div>
+  </div>
+
+  <!-- DB Architecture note -->
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:14px 16px;">
+    <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">🗄️ Backend Architecture (Python + SQLite)</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:10px;">
+        <div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:4px;">Flask API</div>
+        <div style="font-size:10px;color:var(--t3);line-height:1.5;">REST endpoints for review sessions, fix history, XP updates</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:10px;">
+        <div style="font-size:10px;color:var(--green);font-weight:700;margin-bottom:4px;">SQLite DB</div>
+        <div style="font-size:10px;color:var(--t3);line-height:1.5;">Tables: users, review_sessions, fixes, learning_progress</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:10px;">
+        <div style="font-size:10px;color:var(--purple);font-weight:700;margin-bottom:4px;">Anthropic SDK</div>
+        <div style="font-size:10px;color:var(--t3);line-height:1.5;">Claude claude-sonnet-4-20250514 powers code review & learning gen</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:10px;">
+        <div style="font-size:10px;color:var(--amber);font-weight:700;margin-bottom:4px;">game_engine.py</div>
+        <div style="font-size:10px;color:var(--t3);line-height:1.5;">Adapts challenges based on user's error history from DB</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- EDITOR PAGE -->
+<div class="page" id="page-editor">
+  <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="editor-topbar">
+      <div class="file-tab active" onclick="switchFile(0,this)">code-review.py</div>
+      <div class="file-tab" onclick="switchFile(1,this)">utils.py</div>
+      <div class="file-tab" onclick="switchFile(2,this)">models.py</div>
+      <div class="file-tab" onclick="switchFile(3,this)">api.py</div>
+      <div class="etb-spacer"></div>
+      <button class="action-btn btn-run" onclick="runCode()">▶ Run</button>
+      <button class="action-btn btn-validate" onclick="validateCode()">✓ Validate</button>
+      <button class="action-btn btn-fix" onclick="fixSelectedLine()">⚡ Fix Line</button>
+      <button class="action-btn btn-review" onclick="triggerReview()">🤖 AI Review</button>
+      <button class="action-btn btn-learn" onclick="triggerLearnModule()">📚 Learn</button>
+    </div>
+    <div class="editor-main">
+      <div class="file-sidebar">
+        <div class="fsb-section">Explorer</div>
+        <div class="fsb-item active" onclick="switchFile(0)">🐍 code-review.py</div>
+        <div class="fsb-item" onclick="switchFile(1)">🐍 utils.py</div>
+        <div class="fsb-item" onclick="switchFile(2)">🐍 models.py</div>
+        <div class="fsb-item" onclick="switchFile(3)">🐍 api.py</div>
+        <div class="fsb-item">📄 config.json</div>
+        <div class="fsb-section" style="margin-top:8px">Recent</div>
+        <div class="fsb-item">📜 auth.py</div>
+        <div class="fsb-item">📜 db.py</div>
+        <div class="fsb-section" style="margin-top:8px">DB Tables</div>
+        <div class="fsb-item" style="color:var(--green);font-size:10px;">🗄 review_sessions</div>
+        <div class="fsb-item" style="color:var(--green);font-size:10px;">🗄 fixes</div>
+        <div class="fsb-item" style="color:var(--green);font-size:10px;">🗄 learning_log</div>
+      </div>
+      <div class="code-editor-wrap">
+        <div class="ced-header">
+          <span style="font-family:var(--font-mono);font-size:11px" id="lang-badge">Python 3.11</span>
+          <span style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r4);padding:2px 8px;font-family:var(--font-mono);font-size:10px;">UTF-8</span>
+          <span style="font-size:11px;color:var(--t3)" id="file-name-badge">code-review.py</span>
+          <div class="sel-line-badge" id="sel-line-badge">⚠ Line <span id="sel-line-num">14</span> selected</div>
+        </div>
+        <div class="code-area">
+          <div class="line-gutter" id="line-gutter"></div>
+          <textarea id="editor" style="width:100%; height:100%; background:#111; color:white; font-family:monospace; font-size:14px; padding:10px;"></textarea>
+        </div>
+        <div class="statusbar">
+          <div class="sb"><div class="sb-dot"></div><span id="sb-agents">3 Agents Active</span></div>
+          <div class="sb">Ln <span id="sb-ln">14</span>, Col <span id="sb-col">42</span></div>
+          <div class="sb" id="sb-lang">Python 3.11</div>
+          <div class="sb ml-auto" id="sb-issues" style="color:var(--amber)">⚠ 1 issue · Line 14</div>
+          <div class="sb">AICRA v2.5.0</div>
+        </div>
+      </div>
+
+      <!-- AI + Learning Panel -->
+      <div class="ai-panel">
+        <div class="aip-header">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#5b8ef0" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="#5b8ef0" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span class="aip-title">AI Review System</span>
+          <span class="status-badge sb-active" id="ai-status-badge">ACTIVE</span>
+        </div>
+
+        <!-- Panel Tabs -->
+        <div class="panel-tabs">
+          <div class="ptab active" onclick="switchPanelTab('review',this)" id="ptab-review">Review</div>
+          <div class="ptab ptab-purple" onclick="switchPanelTab('learn',this)" id="ptab-learn">📚 Learn</div>
+        </div>
+
+        <!-- REVIEW TAB -->
+        <div class="tab-pane active" id="tab-review" style="flex-direction:column;overflow-y:auto;">
+          <div class="agents-section">
+            <div class="agent-card">
+              <div class="agent-row"><div class="agent-ico aic1">🔍</div><span class="agent-name" style="color:#82aaff">Context Agent</span><span class="agent-stat" id="a1-status">idle</span></div>
+              <div class="agent-detail" id="a1-detail">Awaiting review trigger…</div>
+              <div class="mini-bar-row"><span style="font-size:10px;color:var(--t3)">Confidence</span><div class="mini-bar"><div class="mini-fill mf-green" id="a1-bar" style="width:0%"></div></div><span style="font-size:10px;color:var(--t3)" id="a1-pct">—</span></div>
+            </div>
+            <div class="agent-card">
+              <div class="agent-row"><div class="agent-ico aic2">📈</div><span class="agent-name" style="color:#c084fc">Evolution Predictor</span><span class="agent-stat" id="a2-status">idle</span></div>
+              <div class="agent-detail" id="a2-detail">Awaiting context output…</div>
+              <div class="mini-bar-row"><span style="font-size:10px;color:var(--t3)">Risk</span><div class="mini-bar"><div class="mini-fill mf-amber" id="a2-bar" style="width:0%"></div></div><span style="font-size:10px;color:var(--t3)" id="a2-pct">—</span></div>
+            </div>
+            <div class="agent-card">
+              <div class="agent-row"><div class="agent-ico aic3">⚠️</div><span class="agent-name" style="color:#fbbf24">Fragility Scorer</span><span class="agent-stat" id="a3-status">idle</span></div>
+              <div class="agent-detail" id="a3-detail">Awaiting predictions…</div>
+              <div class="mini-bar-row"><span style="font-size:10px;color:var(--t3)">Fragility</span><div class="mini-bar"><div class="mini-fill mf-amber" id="a3-bar" style="width:0%"></div></div><span style="font-size:10px;color:var(--t3)" id="a3-pct">—</span></div>
+            </div>
+          </div>
+          <div class="output-section" id="output-section">
+            <div class="out-label">Output Panel</div>
+            <div id="output-placeholder" style="font-size:12px;color:var(--t3);text-align:center;padding:20px 0">Click <strong style="color:var(--blue)">AI Review</strong> for full file analysis<br>or <strong style="color:var(--amber)">Fix Line</strong> for targeted fix<br><br><span style="color:var(--purple);cursor:pointer" onclick="triggerLearnModule()">📚 Click Learn for AI-generated lessons</span></div>
+            <div id="output-diff" style="display:none;flex-direction:column;gap:8px">
+              <div class="diff-box">
+                <div class="diff-sublabel">Issue found on line(s) <span id="diff-line">14</span></div>
+                <div class="diff-old" id="diff-old"></div>
+                <div class="diff-sublabel" style="margin-top:8px">AI Corrected</div>
+                <div class="diff-new" id="diff-new"></div>
+              </div>
+              <div class="explain-box" id="diff-explain"></div>
+              <div style="display:flex;gap:6px">
+                <button class="btn-accept" onclick="acceptFix()">✓ Accept Fix</button>
+                <button class="btn-reject" onclick="rejectFix()">Reject</button>
+                <button class="btn-reject" style="border-color:var(--purple2);color:var(--purple)" onclick="acceptFixAndLearn()">📚 Learn Why</button>
+              </div>
+            </div>
+           <div id="output-run">
+    <div class="run-output" id="run-output-content"></div>
+</div>
+            <!-- Multi-issue summary panel -->
+            <div id="output-full-review" style="display:none;flex-direction:column;gap:8px">
+            </div>
+          </div>
+        </div>
+
+        <!-- LEARN TAB -->
+        <div class="tab-pane" id="tab-learn" style="flex-direction:column;overflow-y:auto;gap:10px;">
+          <div id="learn-placeholder" class="learn-panel">
+            <div class="learn-header">
+              <span style="font-size:18px">📚</span>
+              <span class="learn-title-txt">Learning Module</span>
+              <span class="learn-badge">AI-POWERED</span>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:14px;font-size:12px;color:var(--t2);line-height:1.6;">
+              Run <strong style="color:var(--blue)">AI Review</strong> first to detect issues, then click <strong style="color:var(--purple)">📚 Learn</strong> or the <em>Learn Why</em> button after fixing to generate an AI-powered lesson on the concepts behind each correction.
+              <br><br>
+              Lessons include: <strong style="color:var(--t1)">concept explanation</strong>, <strong style="color:var(--t1)">good vs bad examples</strong>, and a <strong style="color:var(--t1)">knowledge quiz</strong>.
+            </div>
+          </div>
+          <div id="learn-content" style="display:none;flex-direction:column;gap:10px;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page" id="page-dashboard">
+<div class="dash-body">
+  <div class="dash-hdr">
+    <div><div class="dash-title">Developer Dashboard</div><div class="dash-sub" id="dash-date">Weekly summary · March 14 – March 21, 2026</div></div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-lbl">Files Reviewed</div><div class="stat-val" style="color:var(--blue)" id="d-reviewed">247</div><div class="stat-delta">↑ 18% vs last week</div></div>
+    <div class="stat-card"><div class="stat-lbl">Lines Fixed</div><div class="stat-val" style="color:var(--green)" id="d-fixed">1,084</div><div class="stat-delta">↑ 31% improvement</div></div>
+    <div class="stat-card"><div class="stat-lbl">Avg Fragility Score</div><div class="stat-val" style="color:var(--amber)" id="d-fragility">0.34</div><div class="stat-delta">↓ 0.09 pts (better)</div></div>
+    <div class="stat-card"><div class="stat-lbl">Total XP Earned</div><div class="stat-val" style="color:var(--purple)" id="d-xp">4,820</div><div class="stat-delta">↑ 640 XP this week</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Reviews per Day</div>
+      <div class="bar-chart" id="bar-chart">
+        <div class="bc-col"><div class="bc-val">28</div><div class="bc-bar" style="height:38%;background:var(--blue);opacity:.7"></div><div class="bc-lbl">Mon</div></div>
+        <div class="bc-col"><div class="bc-val">41</div><div class="bc-bar" style="height:55%;background:var(--blue);opacity:.8"></div><div class="bc-lbl">Tue</div></div>
+        <div class="bc-col"><div class="bc-val">54</div><div class="bc-bar" style="height:72%;background:var(--blue)"></div><div class="bc-lbl">Wed</div></div>
+        <div class="bc-col"><div class="bc-val">36</div><div class="bc-bar" style="height:48%;background:var(--blue);opacity:.75"></div><div class="bc-lbl">Thu</div></div>
+        <div class="bc-col"><div class="bc-val">67</div><div class="bc-bar" style="height:90%;background:var(--blue)"></div><div class="bc-lbl">Fri</div></div>
+        <div class="bc-col"><div class="bc-val">22</div><div class="bc-bar" style="height:32%;background:var(--blue);opacity:.5"></div><div class="bc-lbl">Sat</div></div>
+        <div class="bc-col"><div class="bc-val">45</div><div class="bc-bar" style="height:60%;background:var(--green)"></div><div class="bc-lbl">Sun</div></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Python Issue Breakdown</div>
+      <div class="donut-wrap">
+        <svg width="90" height="90" viewBox="0 0 90 90"><circle cx="45" cy="45" r="34" fill="none" stroke="#1a1f2c" stroke-width="18"/><circle cx="45" cy="45" r="34" fill="none" stroke="#5b8ef0" stroke-width="18" stroke-dasharray="85 128" stroke-dashoffset="0" stroke-linecap="round"/><circle cx="45" cy="45" r="34" fill="none" stroke="#f5a623" stroke-width="18" stroke-dasharray="48 165" stroke-dashoffset="-85" stroke-linecap="round"/><circle cx="45" cy="45" r="34" fill="none" stroke="#f05c5c" stroke-width="18" stroke-dasharray="25 188" stroke-dashoffset="-133" stroke-linecap="round"/><circle cx="45" cy="45" r="34" fill="none" stroke="#3dd6a3" stroke-width="18" stroke-dasharray="56 157" stroke-dashoffset="-158" stroke-linecap="round"/></svg>
+        <div class="donut-legend">
+          <div class="dl-item"><div class="dl-dot" style="background:var(--blue)"></div>Logic errors (40%)</div>
+          <div class="dl-item"><div class="dl-dot" style="background:var(--amber)"></div>Type issues (24%)</div>
+          <div class="dl-item"><div class="dl-dot" style="background:var(--red)"></div>Security (12%)</div>
+          <div class="dl-item"><div class="dl-dot" style="background:var(--green)"></div>Style/perf (24%)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r10);padding:14px 16px;">
+    <div style="font-size:12px;font-weight:700;margin-bottom:10px;">Learning Progress</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:10px;"><div style="font-size:10px;color:var(--green);font-weight:700">SQL Injection</div><div style="height:4px;background:var(--bg4);border-radius:2px;margin-top:5px;overflow:hidden"><div style="width:90%;height:100%;background:var(--green)"></div></div><div style="font-size:9px;color:var(--t3);margin-top:3px">90% mastered</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:10px;"><div style="font-size:10px;color:var(--amber);font-weight:700">Exception Handling</div><div style="height:4px;background:var(--bg4);border-radius:2px;margin-top:5px;overflow:hidden"><div style="width:65%;height:100%;background:var(--amber)"></div></div><div style="font-size:9px;color:var(--t3);margin-top:3px">65% mastered</div></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:10px;"><div style="font-size:10px;color:var(--blue);font-weight:700">Type Annotations</div><div style="height:4px;background:var(--bg4);border-radius:2px;margin-top:5px;overflow:hidden"><div style="width:45%;height:100%;background:var(--blue)"></div></div><div style="font-size:9px;color:var(--t3);margin-top:3px">45% mastered</div></div>
+    </div>
+  </div>
+  <div class="agents-grid">
+    <div class="agent-perf-card"><div class="apc-header"><div class="apc-icon" style="background:#0b1c3d;border:1px solid #2244aa;">🔍</div><div><div style="font-size:11px;font-weight:700;color:#82aaff">Code Context Agent</div><div style="font-size:10px;color:var(--t3)">247 analyses · avg 1.2s</div></div></div><div style="font-size:10px;color:var(--t3)">Accuracy</div><div class="perf-bar"><div class="perf-fill" style="width:94%;background:var(--blue)"></div></div><div style="font-size:12px;color:var(--blue);margin-top:4px;font-family:var(--font-mono);font-weight:700">94%</div></div>
+    <div class="agent-perf-card"><div class="apc-header"><div class="apc-icon" style="background:#1a0c3d;border:1px solid #6633cc;">📈</div><div><div style="font-size:11px;font-weight:700;color:#c084fc">Evolution Predictor</div><div style="font-size:10px;color:var(--t3)">189 predictions · avg 2.1s</div></div></div><div style="font-size:10px;color:var(--t3)">Precision</div><div class="perf-bar"><div class="perf-fill" style="width:87%;background:var(--purple)"></div></div><div style="font-size:12px;color:var(--purple);margin-top:4px;font-family:var(--font-mono);font-weight:700">87%</div></div>
+    <div class="agent-perf-card"><div class="apc-header"><div class="apc-icon" style="background:#261604;border:1px solid #8a5500;">⚠️</div><div><div style="font-size:11px;font-weight:700;color:#fbbf24">Fragility Scorer</div><div style="font-size:10px;color:var(--t3)">247 scores · avg 0.8s</div></div></div><div style="font-size:10px;color:var(--t3)">Correlation</div><div class="perf-bar"><div class="perf-fill" style="width:91%;background:var(--amber)"></div></div><div style="font-size:12px;color:var(--amber);margin-top:4px;font-family:var(--font-mono);font-weight:700">91%</div></div>
+  </div>
+  <div class="activity-table">
+    <div class="at-head"><div class="at-title">Recent Reviews</div></div>
+    <table class="dash-tbl">
+      <thead><tr><th>File</th><th>Issue Type</th><th>Lines</th><th>Fragility</th><th>Learning</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:var(--font-mono)">auth.py</td><td>Null guard</td><td>42</td><td><span style="color:var(--green)">0.18</span></td><td><span class="status-pill" style="background:#0d0820;color:var(--purple)">Done</span></td><td><span class="status-pill sp-ok">Fixed</span></td></tr>
+        <tr><td style="font-family:var(--font-mono)">api.py</td><td>SQL Injection</td><td>73</td><td><span style="color:var(--red)">0.78</span></td><td><span class="status-pill" style="background:#1e1404;color:var(--amber)">Pending</span></td><td><span class="status-pill sp-err">Critical</span></td></tr>
+        <tr><td style="font-family:var(--font-mono)">models.py</td><td>Bare type</td><td>118</td><td><span style="color:var(--amber)">0.62</span></td><td><span class="status-pill" style="background:#0d0820;color:var(--purple)">Done</span></td><td><span class="status-pill sp-warn">Pending</span></td></tr>
+        <tr><td style="font-family:var(--font-mono)">utils.py</td><td>Regex escape</td><td>13</td><td><span style="color:var(--amber)">0.55</span></td><td><span class="status-pill" style="background:#1e1404;color:var(--amber)">Pending</span></td><td><span class="status-pill sp-warn">Warn</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- GAME PAGE -->
+<div class="page" id="page-game">
+
+    <div style="
+        width:100%;
+        height:100%;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        background:#05070f;
+    ">
+
+        <iframe
+            src="/game_runner"
+            style="
+                width:900px;
+                height:550px;
+                border:none;
+                border-radius:10px;
+                box-shadow:0 0 20px #000;
+            ">
+        </iframe>
+
+    </div>
+
+</div>
+<!-- Toast & Modal -->
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title">Modal</div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-reject" onclick="closeModal()">Cancel</button>
+      <button class="btn-accept" id="modal-action-btn" style="flex:0;padding:8px 18px">OK</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .app -->
+
+<script>
+/* ═══════════════════════════════════════════════
+   ANTHROPIC API HELPER
+═══════════════════════════════════════════════ */
+async function callClaude(prompt, systemPrompt = '') {
+  const messages = [{ role: 'user', content: prompt }];
+  const body = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1000,
+    messages,
+  };
+  if (systemPrompt) body.system = systemPrompt;
+  
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await response.json();
+  return data.content && data.content[0] ? data.content[0].text : '';
+}
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+const state = {
+  currentPage: 'home',
+  selectedLine: 13,
+  currentFile: 0,
+  xp: 4820,
+  streak: 7,
+  reviewed: 247,
+  fixed: 1084,
+  fragility: 0.34,
+  reviewDone: false,
+  fixApplied: false,
+  lastIssueType: null,
+  lastIssueLine: null,
+
+  // Game state
+  currentLevel: 3,
+  currentMission: 2,
+  gameScore: 0,
+  combo: 1,
+  hp: 5,
+  maxHp: 5,
+  timerSeconds: 150,
+  timerInterval: null,
+  hintRevealed: false,
+  missionAnswered: false,
+  levelXp: 320,
+  skills: {sql:4, exceptions:5, types:3, fragility:2},
+};
+
+/* ═══════════════════════════════════════════════
+   CODE FILES (Python only)
+═══════════════════════════════════════════════ */
+const codeFiles = [
+  {
+    name: 'code-review.py', lang: 'Python 3.11',
+    lines: [
+      {t:'<span class="kw">import</span> os'},
+      {t:'<span class="kw">from</span> typing <span class="kw">import</span> <span class="type">List</span>, <span class="type">Optional</span>, <span class="type">Dict</span>'},
+      {t:'<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass'},
+      {t:''},
+      {t:'<span class="cmt"># ─── Data models ─────────────────────────────</span>'},
+      {t:'<span class="kw">@dataclass</span>'},
+      {t:'<span class="kw">class</span> <span class="type">ReviewResult</span><span class="op">:</span>'},
+      {t:'    line_number<span class="op">:</span> <span class="type">int</span>'},
+      {t:'    original<span class="op">:</span> <span class="type">str</span>'},
+      {t:'    suggestion<span class="op">:</span> <span class="type">str</span>'},
+      {t:'    fragility_score<span class="op">:</span> <span class="type">float</span>'},
+      {t:''},
+      {t:'<span class="kw">def</span> <span class="fn">analyze_code</span><span class="op">(</span>code<span class="op">:</span> <span class="type">str</span><span class="op">)</span> <span class="op">-></span> <span class="type">List</span><span class="op">[</span><span class="type">ReviewResult</span><span class="op">]:</span>'},
+      {t:'    results <span class="op">=</span> <span class="fn">get_results</span><span class="op">(</span>code<span class="op">,</span> validate<span class="op">=</span><span class="kw">False</span><span class="op">)</span>', issue:true, issueType:'Validation flag disabled', fix:'    results <span class="op">=</span> <span class="fn">get_results</span><span class="op">(</span>code<span class="op">,</span> validate<span class="op">=</span><span class="kw">True</span><span class="op">)</span>', fixText:'results = get_results(code, validate=True)', origText:'results = get_results(code, validate=False)', explain:'<strong style="color:var(--green)">⚡ Line 14 modified.</strong> Setting <code style="background:#041410;padding:1px 5px;border-radius:3px;font-family:var(--font-mono)">validate=True</code> prevents silent failures when input is malformed. The Evolution Predictor flagged downstream callers that rely on validated output. Fragility score drops from <strong>0.71 → 0.18</strong>.'},
+      {t:'    <span class="kw">if not</span> results<span class="op">:</span>'},
+      {t:'        <span class="kw">return</span> <span class="op">[]</span>'},
+      {t:'    filtered <span class="op">=</span> <span class="op">[</span>r <span class="kw">for</span> r <span class="kw">in</span> results <span class="kw">if</span> r.fragility_score <span class="op">></span> <span class="num">0.4</span><span class="op">]</span>'},
+      {t:'    <span class="kw">return</span> filtered'},
+      {t:''},
+      {t:'<span class="kw">def</span> <span class="fn">format_output</span><span class="op">(</span>results<span class="op">:</span> <span class="type">List</span><span class="op">[</span><span class="type">ReviewResult</span><span class="op">]</span><span class="op">)</span> <span class="op">-></span> <span class="type">str</span><span class="op">:</span>'},
+      {t:'    <span class="kw">return</span> <span class="str">"\\n"</span>.join<span class="op">(</span>r.suggestion <span class="kw">for</span> r <span class="kw">in</span> results<span class="op">)</span>'},
+    ]
+  },
+  {
+    name: 'utils.py', lang: 'Python 3.11',
+    lines: [
+      {t:'<span class="kw">import</span> re'},
+      {t:'<span class="kw">import</span> hashlib'},
+      {t:'<span class="kw">from</span> typing <span class="kw">import</span> <span class="type">Optional</span>'},
+      {t:''},
+      {t:'<span class="kw">def</span> <span class="fn">sanitize_input</span><span class="op">(</span>text<span class="op">:</span> <span class="type">str</span><span class="op">)</span> <span class="op">-></span> <span class="type">str</span><span class="op">:</span>'},
+      {t:'    <span class="cmt"># Remove dangerous characters</span>'},
+      {t:'    <span class="kw">return</span> re.sub<span class="op">(</span><span class="str">r\'[^\\w\\s]\'</span><span class="op">,</span> <span class="str">\'\'</span><span class="op">,</span> text<span class="op">)</span>'},
+      {t:''},
+      {t:'<span class="kw">def</span> <span class="fn">hash_token</span><span class="op">(</span>token<span class="op">:</span> <span class="type">str</span><span class="op">)</span> <span class="op">-></span> <span class="type">str</span><span class="op">:</span>'},
+      {t:'    <span class="kw">return</span> hashlib.sha256<span class="op">(</span>token.encode<span class="op">()).hexdigest()</span>'},
+      {t:''},
+      {t:'<span class="kw">def</span> <span class="fn">validate_email</span><span class="op">(</span>email<span class="op">:</span> <span class="type">str</span><span class="op">)</span> <span class="op">-></span> <span class="type">bool</span><span class="op">:</span>'},
+      {t:'    pattern <span class="op">=</span> <span class="str">r\'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\'</span>', issue:true, issueType:'Regex character class error', fix:'    pattern <span class="op">=</span> <span class="str">r\'^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$\'</span>', fixText:"    pattern = r'^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$'", origText:"    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'", explain:'<strong style="color:var(--green)">⚡ Regex hardened.</strong> The hyphen <code style="font-family:var(--font-mono)">-</code> in character classes must be escaped or placed at start/end to avoid creating unintended character ranges. Fragility drops from 0.55 → 0.12.'},
+      {t:'    <span class="kw">return</span> bool<span class="op">(</span>re.match<span class="op">(</span>pattern<span class="op">,</span> email<span class="op">))</span>'},
+    ]
+  },
+  {
+    name: 'models.py', lang: 'Python 3.11',
+    lines: [
+      {t:'<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field'},
+      {t:'<span class="kw">from</span> typing <span class="kw">import</span> <span class="type">List</span>, <span class="type">Optional</span>'},
+      {t:'<span class="kw">from</span> datetime <span class="kw">import</span> datetime'},
+      {t:''},
+      {t:'<span class="kw">@dataclass</span>'},
+      {t:'<span class="kw">class</span> <span class="type">User</span><span class="op">:</span>'},
+      {t:'    id<span class="op">:</span> <span class="type">int</span>'},
+      {t:'    email<span class="op">:</span> <span class="type">str</span>'},
+      {t:'    created_at<span class="op">:</span> <span class="type">datetime</span>'},
+      {t:'    roles<span class="op">:</span> <span class="type">List</span><span class="op">[</span><span class="type">str</span><span class="op">]</span> <span class="op">=</span> field<span class="op">(</span>default_factory<span class="op">=</span>list<span class="op">)</span>'},
+      {t:''},
+      {t:'<span class="kw">@dataclass</span>'},
+      {t:'<span class="kw">class</span> <span class="type">ReviewSession</span><span class="op">:</span>'},
+      {t:'    user_id<span class="op">:</span> <span class="type">int</span>'},
+      {t:'    file_path<span class="op">:</span> <span class="type">str</span>'},
+      {t:'    issues<span class="op">:</span> <span class="type">List</span> <span class="op">=</span> field<span class="op">(</span>default_factory<span class="op">=</span>list<span class="op">)</span>', issue:true, issueType:'Bare generic List type', fix:'    issues<span class="op">:</span> <span class="type">List</span><span class="op">[</span><span class="type">dict</span><span class="op">]</span> <span class="op">=</span> field<span class="op">(</span>default_factory<span class="op">=</span>list<span class="op">)</span>', fixText:'    issues: List[dict] = field(default_factory=list)', origText:'    issues: List = field(default_factory=list)', explain:'<strong style="color:var(--green)">⚡ Type annotation fixed.</strong> Bare <code style="font-family:var(--font-mono)">List</code> without a type parameter loses type safety. Specifying <code style="font-family:var(--font-mono)">List[dict]</code> enables static checking. Fragility 0.62 → 0.15.'},
+      {t:'    fragility<span class="op">:</span> <span class="type">float</span> <span class="op">=</span> <span class="num">0.0</span>'},
+    ]
+  },
+  {
+    name: 'api.py', lang: 'Python 3.11',
+    lines: [
+      {t:'<span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify'},
+      {t:'<span class="kw">from</span> models <span class="kw">import</span> User, ReviewSession'},
+      {t:''},
+      {t:'app <span class="op">=</span> Flask<span class="op">(</span>__name__<span class="op">)</span>'},
+      {t:''},
+      {t:'<span class="kw">@app.route</span><span class="op">(</span><span class="str">\'/review\'</span><span class="op">,</span> methods<span class="op">=[</span><span class="str">\'POST\'</span><span class="op">])</span>'},
+      {t:'<span class="kw">def</span> <span class="fn">create_review</span><span class="op">():</span>'},
+      {t:'    data <span class="op">=</span> request.json'},
+      {t:'    user_id <span class="op">=</span> data<span class="op">[</span><span class="str">\'user_id\'</span><span class="op">]</span>', issue:true, issueType:'Unsafe dict access (KeyError risk)', fix:'    user_id <span class="op">=</span> data.get<span class="op">(</span><span class="str">\'user_id\'</span><span class="op">)</span>', fixText:"    user_id = data.get('user_id')", origText:"    user_id = data['user_id']", explain:'<strong style="color:var(--green)">⚡ KeyError prevented.</strong> Direct dictionary access raises <code style="font-family:var(--font-mono)">KeyError</code> when key is missing — crashing the endpoint. Using <code style="font-family:var(--font-mono)">.get()</code> returns <code style="font-family:var(--font-mono)">None</code> gracefully. Fragility drops from 0.78 → 0.22.'},
+      {t:'    file_path <span class="op">=</span> data.get<span class="op">(</span><span class="str">\'file_path\'</span><span class="op">,</span> <span class="str">\'\'</span><span class="op">)</span>'},
+      {t:'    session <span class="op">=</span> ReviewSession<span class="op">(</span>user_id<span class="op">,</span> file_path<span class="op">)</span>'},
+      {t:'    <span class="kw">return</span> jsonify<span class="op">({</span><span class="str">\'ok\'</span><span class="op">:</span> <span class="kw">True</span><span class="op">})</span>'},
+    ]
+  }
+];
+
+/* ═══════════════════════════════════════════════
+   GAME DATA
+═══════════════════════════════════════════════ */
+const levels = [
+  {name:'Level 1 — Init Error', desc:'Null pointer bugs · Beginner', done:true, missions:3, missionsDone:3, diff:'BEGINNER'},
+  {name:'Level 2 — Type Chaos', desc:'Type mismatches · Beginner', done:true, missions:4, missionsDone:4, diff:'BEGINNER'},
+  {name:'Level 3 — Bare Except', desc:'Exception handling · Normal', done:true, missions:3, missionsDone:3, diff:'NORMAL'},
+  {name:'Level 4 — SQL Dungeon', desc:'Injection attacks · Normal', done:false, missions:5, missionsDone:2, diff:'NORMAL'},
+  {name:'Level 5 — Race Conditions', desc:'Concurrency · Hard', done:false, locked:true, missions:5, missionsDone:0, diff:'HARD'},
+  {name:'Level 6 — Memory Leaks', desc:'Resource management · Hard', done:false, locked:true, missions:5, missionsDone:0, diff:'HARD'},
+  {name:'Level 7 — Boss: Legacy Code', desc:'Full refactor · Expert', done:false, locked:true, missions:7, missionsDone:0, diff:'EXPERT'},
+];
+
+const missions = [
+  {
+    title:'Escape the Null Swamp', emoji:'🪄',
+    desc:'A function returns None when the input list is empty, crashing the caller. Find the missing guard clause.',
+    code:`<span class="kw">def</span> <span class="fn">get_first_item</span>(items):\n    <span class="cmt"># Returns first item from list</span>\n<span class="bug-line">    <span class="kw">return</span> items[<span class="num">0</span>]  <span class="cmt"># ⚠ IndexError on empty list</span></span>\n\n<span class="kw">def</span> <span class="fn">process_data</span>(data):\n    item = <span class="fn">get_first_item</span>(data)\n    <span class="kw">return</span> item.strip()`,
+    options:[
+      {text:'if items is None: return None', correct:false},
+      {text:'return items[0] if items else None', correct:true},
+      {text:'try: return items[0] except: pass', correct:false},
+      {text:'return items[-1] if items else []', correct:false},
+    ],
+    hint:'The guard clause should handle empty sequences. Empty sequences are falsy in Python.',
+    pyTip:{title:'Truthy/Falsy in Python', body:'In Python, empty sequences (<code>[]</code>, <code>()</code>, <code>""</code>) and <code>None</code> are all falsy. Use <code>if items:</code> to guard against both <code>None</code> and empty lists simultaneously. This is more Pythonic than <code>if items is not None and len(items) > 0</code>.'},
+    explain:'<strong style="color:var(--green)">✓ Correct!</strong> Using <code>if items else None</code> is idiomatic Python — empty sequences are falsy. This handles both empty lists and None inputs without masking the bug type.',
+    xp: 120, diff:'BEGINNER',
+  },
+  {
+    title:'Break the Type Curse', emoji:'🏷️',
+    desc:'A type annotation uses bare List without a parameter, breaking static analysis and hiding type errors at runtime.',
+    code:`<span class="kw">from</span> typing <span class="kw">import</span> <span class="type">List</span>\n\n<span class="kw">@dataclass</span>\n<span class="kw">class</span> <span class="type">Config</span>:\n<span class="bug-line">    tags<span class="op">:</span> <span class="type">List</span> <span class="op">=</span> field(default_factory=list)  <span class="cmt"># ⚠</span></span>\n    name<span class="op">:</span> <span class="type">str</span> <span class="op">=</span> <span class="str">""</span>`,
+    options:[
+      {text:'tags: list = field(default_factory=list)', correct:false},
+      {text:'tags: List[str] = field(default_factory=list)', correct:true},
+      {text:'tags: Optional[List] = None', correct:false},
+      {text:'tags: Any = field(default_factory=list)', correct:false},
+    ],
+    hint:'Bare generic types like List without parameters lose type information. Specify what the list contains.',
+    pyTip:{title:'Python Type Annotations', body:'Use parameterized generics: <code>List[str]</code>, <code>Dict[str, int]</code>, <code>Optional[str]</code>. Bare <code>List</code> is legal but defeats the purpose of type hints — tools like mypy and pyright can\'t check element types. In Python 3.9+ you can also use the built-in <code>list[str]</code> directly.'},
+    explain:'<strong style="color:var(--green)">✓ Correct!</strong> <code>List[str]</code> tells type checkers exactly what the list holds, enabling catch of type errors at analysis time rather than runtime.',
+    xp: 140, diff:'NORMAL',
+  },
+  {
+    title:'Defeat the Injection Goblin', emoji:'🗡️',
+    desc:'This database function is cursed with SQL injection. Spot the vulnerable f-string query and choose the parameterized fix.',
+    code:`<span class="kw">def</span> <span class="fn">get_user_by_email</span>(email: <span class="type">str</span>) -> <span class="type">Optional</span>[<span class="type">User</span>]:\n    <span class="kw">with</span> <span class="fn">db.session</span>() <span class="kw">as</span> session:\n<span class="bug-line">        query <span class="op">=</span> <span class="str">f"SELECT * FROM users WHERE email='<span class="bug-underline">{email}</span>'"</span>  <span class="cmt"># ⚠</span></span>\n        result <span class="op">=</span> session.<span class="fn">execute</span>(query)\n        <span class="kw">return</span> result.<span class="fn">fetchone</span>()`,
+    options:[
+      {text:"query = f\"...WHERE email='{email.strip()}'\"", correct:false},
+      {text:'query = "SELECT * FROM users WHERE email=:email"', correct:true},
+      {text:"query = f\"SELECT id FROM users WHERE email='{email}'\"", correct:false},
+      {text:"email = escape(email); query = f\"...{email}...\"", correct:false},
+    ],
+    hint:'String interpolation in SQL always creates injection risk. The database driver must handle parameter escaping.',
+    pyTip:{title:'SQL Injection Prevention', body:'Never use f-strings or % formatting in SQL queries. Use parameterized queries with <code>:name</code> or <code>?</code> placeholders. With SQLAlchemy: <code>session.execute(query, {"email": email})</code>. With sqlite3: <code>cursor.execute("SELECT * FROM t WHERE x=?", (val,))</code>. The DB driver escapes all user input automatically.'},
+    explain:'<strong style="color:var(--green)">✓ Goblin defeated!</strong> Option B uses a named placeholder <code>:email</code> — the database driver escapes the value automatically, completely neutralizing the injection vector.',
+    xp: 160, diff:'NORMAL',
+  },
+  {
+    title:'Slay the KeyError Dragon', emoji:'🐉',
+    desc:'Direct dict access crashes the API endpoint when a key is missing. Choose the defensive access pattern.',
+    code:`<span class="kw">@app.route</span>(<span class="str">'/api/user'</span>, methods=[<span class="str">'POST'</span>])\n<span class="kw">def</span> <span class="fn">create_user</span>():\n    data <span class="op">=</span> request.json\n<span class="bug-line">    user_id <span class="op">=</span> data[<span class="str">'user_id'</span>]  <span class="cmt"># ⚠ KeyError if missing!</span></span>\n    email <span class="op">=</span> data.get(<span class="str">'email'</span>, <span class="str">''</span>)\n    <span class="kw">return</span> <span class="fn">create_account</span>(user_id, email)`,
+    options:[
+      {text:"user_id = data.get('user_id', 0)", correct:false},
+      {text:"user_id = data.get('user_id')", correct:true},
+      {text:"user_id = data.get('user_id') or raise ValueError", correct:false},
+      {text:"user_id = data['user_id'] if 'user_id' in data else None", correct:false},
+    ],
+    hint:"The function already uses .get() on line 5. Apply the same pattern. What should happen when required fields are absent?",
+    pyTip:{title:'Safe Dict Access in Python', body:'<code>dict.get(key)</code> returns <code>None</code> if key absent (no exception). <code>dict.get(key, default)</code> returns default. For required fields, validate after: <code>if user_id is None: return error_response()</code>. Option D (<code>if \'key\' in dict</code>) works but is more verbose — prefer <code>.get()</code> in production Python code.'},
+    explain:'<strong style="color:var(--green)">✓ Dragon slain!</strong> <code>.get(\'user_id\')</code> returns <code>None</code> gracefully instead of raising. Option D is equivalent but verbose. Option A hides the missing field with a fake ID.',
+    xp: 180, diff:'NORMAL',
+  },
+  {
+    title:'Banish the Race Demon', emoji:'👹',
+    desc:'A shared counter is incremented without a lock, causing race conditions in concurrent threads.',
+    code:`<span class="kw">import</span> threading\n\ncounter <span class="op">=</span> <span class="num">0</span>\nlock <span class="op">=</span> threading.Lock()\n\n<span class="kw">def</span> <span class="fn">increment</span>():\n<span class="bug-line">    <span class="kw">global</span> counter\n    counter <span class="op">+=</span> <span class="num">1</span>  <span class="cmt"># ⚠ Not thread-safe!</span></span>`,
+    options:[
+      {text:'counter = counter + 1  # same thing', correct:false},
+      {text:'with lock:\n        counter += 1', correct:true},
+      {text:'counter = threading.local()', correct:false},
+      {text:'counter += 1  # GIL protects this', correct:false},
+    ],
+    hint:"Python's GIL does not guarantee atomicity for read-modify-write operations. You need explicit mutual exclusion.",
+    pyTip:{title:'Thread Safety in Python', body:'<code>+=</code> is three bytecode operations: LOAD, ADD, STORE. The GIL can release between them. Always use <code>threading.Lock()</code> with a context manager for shared mutable state. For counters specifically, consider <code>threading.local()</code> for thread-local data, or use <code>queue.Queue</code> which is thread-safe by design.'},
+    explain:'<strong style="color:var(--green)">✓ Demon banished!</strong> The <code>+=</code> is three ops: READ, ADD, WRITE. Another thread can run between READ and WRITE. The <code>with lock:</code> context manager serializes access correctly.',
+    xp: 200, diff:'HARD',
+  },
+];
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if(b.textContent.toLowerCase().includes(page === 'home' ? 'home' : page === 'editor' ? 'editor' : page === 'dashboard' ? 'dashboard' : 'game')) b.classList.add('active');
+  });
+  state.currentPage = page;
+  if(page === 'editor') renderEditor();
+  if(page === 'game') renderGame();
+  if(page === 'dashboard') {
+
+    startDashboardAnimation();
+
+  }
+
+}
+
+/* ═══════════════════════════════════════════════
+   PANEL TABS
+═══════════════════════════════════════════════ */
+function switchPanelTab(tab, el) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  el.classList.add('active');
+}
+
+function openLearnTab() {
+  switchPanelTab('learn', document.getElementById('ptab-learn'));
+}
+
+/* ═══════════════════════════════════════════════
+   EDITOR
+═══════════════════════════════════════════════ */
+function renderEditor() {
+  const file = codeFiles[state.currentFile];
+  const gutter = document.getElementById('line-gutter');
+  const scroll = document.getElementById('code-scroll');
+  gutter.innerHTML = '';
+  scroll.innerHTML = '';
+  file.lines.forEach((line, i) => {
+    const lg = document.createElement('div');
+    lg.className = 'lg' + (i === state.selectedLine ? ' sel' : '');
+    lg.textContent = i+1;
+    lg.onclick = () => selectLine(i);
+    gutter.appendChild(lg);
+    const cl = document.createElement('div');
+    cl.className = 'cline' + (i === state.selectedLine ? ' selected' : '') + (line.issue && !state.fixApplied ? ' err-line' : '');
+    cl.innerHTML = line.t;
+    if(i === state.selectedLine) {
+      const arr = document.createElement('span');
+      arr.className = 'sel-arrow';
+      arr.textContent = '← selected';
+      cl.appendChild(arr);
+    }
+    cl.onclick = () => selectLine(i);
+    scroll.appendChild(cl);
+  });
+  document.getElementById('file-name-badge').textContent = file.name;
+  document.getElementById('lang-badge').textContent = file.lang;
+  document.getElementById('sb-lang').textContent = file.lang;
+  updateSelBadge();
+  if(!state.reviewDone) resetOutput();
+}
+
+function selectLine(idx) {
+  state.selectedLine = idx;
+  state.reviewDone = false;
+  state.fixApplied = false;
+  renderEditor();
+  resetOutput();
+  updateSelBadge();
+}
+
+function updateSelBadge() {
+  document.getElementById('sel-line-num').textContent = state.selectedLine + 1;
+  document.getElementById('sb-ln').textContent = state.selectedLine + 1;
+  const file = codeFiles[state.currentFile];
+  const line = file.lines[state.selectedLine];
+  const badge = document.getElementById('sb-issues');
+  if(line && line.issue) {
+    badge.textContent = '⚠ Issue on Line ' + (state.selectedLine+1);
+    badge.style.color = 'var(--amber)';
+  } else {
+    badge.textContent = '✓ No issues detected';
+    badge.style.color = 'var(--green)';
+  }
+}
+
+function switchFile(idx, el) {
+  state.currentFile = idx;
+  state.selectedLine = codeFiles[idx].lines.findIndex(l => l.issue) || 0;
+  state.fixApplied = false;
+  state.reviewDone = false;
+  document.querySelectorAll('.file-tab').forEach((t,i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('.fsb-item').forEach((t,i) => { t.classList.toggle('active', i === idx); });
+  resetAgents();
+  renderEditor();
+}
+
+function resetOutput() {
+  document.getElementById('output-placeholder').style.display = 'block';
+  document.getElementById('output-diff').style.display = 'none';
+  document.getElementById('output-run').style.display = 'none';
+  const fr = document.getElementById('output-full-review');
+  if(fr) fr.style.display = 'none';
+}
+
+function resetAgents() {
+  setAgentState('a1','idle','Awaiting review trigger…',0,'—');
+  setAgentState('a2','idle','Awaiting context output…',0,'—');
+  setAgentState('a3','idle','Awaiting predictions…',0,'—');
+  document.getElementById('ai-status-badge').textContent = 'IDLE';
+  document.getElementById('ai-status-badge').className = 'status-badge sb-idle';
+  state.reviewDone = false;
+}
+
+function setAgentState(id, status, detail, pct, pctLabel) {
+  const el = document.getElementById(id+'-status');
+  el.textContent = status;
+  el.className = 'agent-stat ' + (status==='done'?'as-done':status==='running'?'as-run':'');
+  if(status === 'running') el.classList.add('animate-pulse');
+  document.getElementById(id+'-detail').textContent = detail;
+  document.getElementById(id+'-bar').style.width = pct + '%';
+  document.getElementById(id+'-pct').textContent = pctLabel;
+}
+
+/* ═══════════════════════════════════════════════
+   AI REVIEW (with real Claude API)
+═══════════════════════════════════════════════ */
+
+async function triggerReview() {
+
+  openOutputPanel();
+
+  let code = document.getElementById("editor").value;
+
+  let res = await fetch("/review", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ code: code })
+  });
+
+  let data = await res.json();
+
+  document.getElementById("run-output-content").innerText =
+    data.message;
+}
+function getCurrentCode() {
+
+let lines = document.querySelectorAll(".cline");
+
+let code = "";
+
+lines.forEach(l => {
+    code += l.innerText + "\n";
+});
+
+return code;
+
+}
+function showFullReview(file) {
+  // Show all issues in the file, not just one
+  const allIssues = file.lines.map((l,i) => l.issue && !state.fixApplied ? {line: i, ...l} : null).filter(Boolean);
+  if(!allIssues.length) return;
+
+  document.getElementById('output-placeholder').style.display = 'none';
+  const fr = document.getElementById('output-full-review');
+  fr.innerHTML = '';
+  fr.style.display = 'flex';
+  fr.style.flexDirection = 'column';
+  fr.style.gap = '8px';
+
+  const header = document.createElement('div');
+  header.innerHTML = `<div style="background:#0d1e42;border:1px solid var(--blue2);border-radius:var(--r8);padding:10px 12px;font-size:12px;color:var(--blue)">
+    🤖 <strong>AI Review Complete</strong> — ${allIssues.length} issue${allIssues.length>1?'s':''} found in ${file.name}<br>
+    <span style="font-size:10px;color:var(--t2);margin-top:4px;display:block">Select an issue below to fix, or use "Fix Line" button after clicking the highlighted line</span>
+  </div>`;
+  fr.appendChild(header);
+
+  allIssues.forEach((issue, idx) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);overflow:hidden;cursor:pointer;';
+    card.innerHTML = `
+      <div style="background:var(--bg3);padding:6px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);">
+        <span style="font-size:9px;background:#1e0606;color:var(--red);border:1px solid #662222;border-radius:3px;padding:1px 6px;font-weight:700">LINE ${issue.line+1}</span>
+        <span style="font-size:11px;color:var(--amber);font-weight:600">${issue.issueType}</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--t3)">click to select</span>
+      </div>
+      <div style="padding:8px 10px;">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--red);background:#190606;padding:5px 8px;border-radius:4px;margin-bottom:5px;">− ${issue.origText||''}</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--green);background:#041410;padding:5px 8px;border-radius:4px;">+ ${issue.fixText||''}</div>
+      </div>
+      <div style="padding:0 10px 8px;display:flex;gap:6px;">
+        <button class="btn-accept" style="font-size:10px;padding:5px 10px" onclick="quickAcceptFix(${issue.line});event.stopPropagation()">✓ Apply Fix</button>
+        <button class="btn-reject" style="font-size:10px;padding:5px 10px;border-color:var(--purple2);color:var(--purple)" onclick="selectAndLearn(${issue.line});event.stopPropagation()">📚 Learn</button>
+      </div>`;
+    card.onclick = () => { selectLine(issue.line); showReviewResult(issue.line); switchPanelTab('review', document.getElementById('ptab-review')); };
+    fr.appendChild(card);
+  });
+}
+
+function quickAcceptFix(lineIdx) {
+  const file = codeFiles[state.currentFile];
+  const line = file.lines[lineIdx];
+  if(!line || !line.issue) return;
+  state.lastIssueType = line.issueType;
+  state.lastIssueLine = lineIdx;
+  line.t = line.fix || line.t;
+  line.issue = false;
+  state.fixApplied = true;
+  state.fixed++;
+  state.xp += 80;
+  state.fragility = Math.max(0, state.fragility - 0.04);
+  renderEditor();
+  showToast('✓ Fix applied to line '+(lineIdx+1)+' · +80 XP','success');
+  updateXP();
+  updateHomeStats();
+  addActivity(file.name, 'Fix', 'AI Fix', 'Fixed');
+  // Refresh the review panel
+  triggerReview();
+}
+
+function selectAndLearn(lineIdx) {
+  selectLine(lineIdx);
+  const file = codeFiles[state.currentFile];
+  const line = file.lines[lineIdx];
+  state.lastIssueType = line.issueType;
+  state.lastIssueLine = lineIdx;
+  triggerLearnModule();
+}
+
+function showReviewResult(lineIdx) {
+  const file = codeFiles[state.currentFile];
+  const line = file.lines[lineIdx];
+  document.getElementById('output-placeholder').style.display = 'none';
+  document.getElementById('output-full-review').style.display = 'none';
+  const diff = document.getElementById('output-diff');
+  diff.style.display = 'flex';
+  diff.style.flexDirection = 'column';
+  diff.style.gap = '8px';
+  document.getElementById('diff-line').textContent = lineIdx+1;
+  document.getElementById('diff-old').innerHTML = '− ' + (line.origText || '(original)');
+  document.getElementById('diff-new').innerHTML = '+ ' + (line.fixText || '(fix)');
+  document.getElementById('diff-explain').innerHTML = line.explain || '';
+  selectLine(lineIdx);
+}
+
+async function fixSelectedLine() {
+
+  openOutputPanel();
+
+  let code = document.getElementById("editor").value;
+
+  let res = await fetch("/fix", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ code: code })
+  });
+
+  let data = await res.json();
+
+  document.getElementById("run-output-content").innerText =
+    "FIXED:\n\n" +
+    data.fixed_code +
+    "\n\nREASON:\n" +
+    data.reason;
+}
+function acceptFix() {
+  const file = codeFiles[state.currentFile];
+  const line = file.lines[state.selectedLine];
+  if(!line.issue) return;
+  state.lastIssueType = line.issueType;
+  state.lastIssueLine = state.selectedLine;
+  line.t = line.fix || line.t;
+  line.issue = false;
+  state.fixApplied = true;
+  state.fixed++;
+  state.xp += 80;
+  state.fragility = Math.max(0, state.fragility - 0.04);
+  renderEditor();
+  showToast('✓ Fix accepted · Line '+(state.selectedLine+1)+' patched · +80 XP','success');
+  updateXP(); updateHomeStats(); updateDashboard();
+  addActivity(file.name, 'Fix', 'AI Agent', 'Fixed');
+  document.getElementById('output-diff').style.display = 'none';
+  document.getElementById('output-placeholder').style.display = 'block';
+  document.getElementById('output-placeholder').innerHTML = '<div style="color:var(--green);font-size:12px;text-align:center;padding:16px">✓ Fix applied!<br><span style="color:var(--t3);font-size:11px">Click 📚 Learn to understand this fix</span><br><br><button onclick="triggerLearnModule()" style="margin-top:6px;background:#0d0820;border:1px solid var(--purple2);color:var(--purple);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font-ui)">📚 Generate Learning Module</button></div>';
+}
+
+function acceptFixAndLearn() {
+  acceptFix();
+  setTimeout(() => triggerLearnModule(), 300);
+}
+
+function rejectFix() {
+  document.getElementById('output-diff').style.display = 'none';
+  document.getElementById('output-placeholder').style.display = 'block';
+  document.getElementById('output-placeholder').innerHTML = '<div style="color:var(--amber);font-size:12px;text-align:center;padding:16px">Fix rejected — original code preserved</div>';
+  showToast('Fix rejected — original code preserved','info');
+}
+
+async function runCode() {
+
+let code = document.getElementById("editor").value;
+
+let res = await fetch("http://127.0.0.1:5000/run", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        code: code
+    })
+});
+
+let data = await res.json();
+
+/* show run panel */
+document.getElementById("output-placeholder").style.display = "none";
+document.getElementById("output-diff").style.display = "none";
+document.getElementById("output-run").style.display = "block";
+
+/* put output */
+document.getElementById("run-output-content").innerText = data.output;
+
+}
+function validateCode() {
+  const file = codeFiles[state.currentFile];
+  const hasIssue = file.lines.some(l=>l.issue);
+  if(hasIssue && !state.fixApplied) showToast('⚠ Validation found issue — use AI Review for details','info');
+  else showToast('✓ Validation passed — no Python issues found','success');
+}
+
+/* ═══════════════════════════════════════════════
+   LEARNING MODULE (AI-Generated)
+═══════════════════════════════════════════════ */
+async function triggerLearnModule() {
+
+  openOutputPanel();
+
+  let code = document.getElementById("editor").value;
+
+  let res = await fetch("/learn", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ code: code })
+  });
+
+  let data = await res.json();
+
+  document.getElementById("run-output-content").innerText =
+    data.lesson;
+}
+
+function renderLearnModule(lesson, issueType, lineNum, origCode, fixedCode, fileName) {
+  const content = document.getElementById('learn-content');
+  content.innerHTML = `
+    <div class="learn-header">
+      <span style="font-size:18px">📚</span>
+      <span class="learn-title-txt">Learning Module</span>
+      <span class="learn-badge">AI-POWERED</span>
+    </div>
+
+    <div class="learn-progress">
+      <div class="lp-title">Module Progress</div>
+      <div class="lp-item"><div class="lp-dot" style="background:var(--green)"></div><div class="lp-name">Concept</div><div class="lp-status" style="color:var(--green)">✓ Done</div></div>
+      <div class="lp-item"><div class="lp-dot" style="background:var(--green)"></div><div class="lp-name">Code Examples</div><div class="lp-status" style="color:var(--green)">✓ Done</div></div>
+      <div class="lp-item" id="quiz-progress-item"><div class="lp-dot" style="background:var(--amber)"></div><div class="lp-name">Knowledge Quiz</div><div class="lp-status" style="color:var(--amber)" id="quiz-status-lbl">Pending</div></div>
+    </div>
+
+    <div class="concept-card">
+      <div class="cc-header">
+        <div class="cc-label" style="color:var(--blue)">📘 Concept</div>
+        <span style="margin-left:auto;font-size:10px;color:var(--t3)">from ${fileName} · line ${lineNum}</span>
+      </div>
+      <div class="cc-body">
+        <div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px">${lesson.concept_title}</div>
+        <div class="cc-text">${lesson.concept_explanation}</div>
+        <div style="margin-top:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:8px 10px;font-size:10px;color:var(--amber);font-style:italic;">
+          💡 <strong>Rule of thumb:</strong> ${lesson.rule_of_thumb}
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card">
+      <div class="cc-header"><div class="cc-label" style="color:var(--amber)">⚡ Code Examples</div></div>
+      <div class="cc-body">
+        <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:4px;">❌ Before (Buggy)</div>
+        <div class="example-block"><span class="ex-bad">${escapeHtml(origCode || lesson.bad_example)}</span></div>
+        <div style="font-size:10px;color:var(--green);font-weight:700;margin:8px 0 4px;">✅ After (Fixed)</div>
+        <div class="example-block"><span class="ex-good">${escapeHtml(fixedCode || lesson.good_example)}</span></div>
+      </div>
+    </div>
+
+    <div class="quiz-card" id="quiz-section">
+      <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">🎯 Knowledge Check</div>
+      <div class="quiz-q">${lesson.quiz_question}</div>
+      ${lesson.quiz_options.map((opt, i) => `
+        <div class="quiz-opt" id="qopt-${i}" onclick="answerQuiz(${i}, ${lesson.quiz_correct_index}, ${JSON.stringify(lesson.quiz_explanation).replace(/'/g, "&#39;")})">
+          <span style="width:16px;height:16px;border-radius:50%;background:var(--bg5);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">${String.fromCharCode(65+i)}</span>
+          ${opt.replace(/^[A-D]: /, '')}
+        </div>`).join('')}
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+    </div>`;
+  
+  state.xp += 50;
+  updateXP();
+  showToast('📚 Learning module generated · +50 XP','success');
+}
+
+function renderLearnModuleFallback(issueType, line) {
+  const content = document.getElementById('learn-content');
+  content.innerHTML = `
+    <div class="learn-header">
+      <span style="font-size:18px">📚</span>
+      <span class="learn-title-txt">Learning Module</span>
+      <span class="learn-badge">OFFLINE</span>
+    </div>
+    <div class="concept-card">
+      <div class="cc-header"><div class="cc-label" style="color:var(--blue)">📘 Concept</div></div>
+      <div class="cc-body">
+        <div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px">${issueType}</div>
+        <div class="cc-text">${line ? line.explain : 'This is a common Python code quality issue. Review the fix applied and understand why it improves your code\'s fragility and safety.'}</div>
+        <div style="margin-top:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:8px 10px;font-size:11px;color:var(--t2);">Connect to AI to generate a full lesson with examples and quiz. The backend uses <strong style="color:var(--blue)">Flask + Claude API + SQLite</strong> to store and serve personalized lessons.</div>
+      </div>
+    </div>`;
+}
+
+function answerQuiz(chosen, correct, explanation) {
+  document.querySelectorAll('.quiz-opt').forEach(el => el.style.pointerEvents = 'none');
+  const chosenEl = document.getElementById('qopt-'+chosen);
+  const correctEl = document.getElementById('qopt-'+correct);
+  correctEl.classList.add('qo-right');
+  if(chosen !== correct) chosenEl.classList.add('qo-wrong');
+
+  const feedback = document.getElementById('quiz-feedback');
+  feedback.style.display = 'block';
+  if(chosen === correct) {
+    feedback.className = 'quiz-feedback qf-correct';
+    feedback.innerHTML = '✓ Correct! ' + explanation;
+    state.xp += 30;
+    updateXP();
+    showToast('✓ Quiz correct! +30 XP','success');
+    document.getElementById('quiz-status-lbl').textContent = '✓ Passed';
+    document.getElementById('quiz-status-lbl').style.color = 'var(--green)';
+  } else {
+    feedback.className = 'quiz-feedback qf-wrong';
+    feedback.innerHTML = '✗ Not quite. ' + explanation;
+    showToast('Quiz incorrect — read the explanation below','error');
+  }
+}
+
+function escapeHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ═══════════════════════════════════════════════
+   GAME ENGINE
+═══════════════════════════════════════════════ */
+function renderGame() {
+  renderWorldMap();
+  renderCurrentMission();
+  renderGameInfo();
+  renderSkills();
+  renderLeaderboard();
+  updateGameUI();
+  if(!state.timerInterval) startTimer();
+}
+
+function renderWorldMap() {
+  const map = document.getElementById('world-map');
+  map.innerHTML = '';
+  levels.forEach((lv, i) => {
+    const isDone = lv.done;
+    const isActive = !lv.done && !lv.locked && i === state.currentLevel;
+    const isLocked = lv.locked;
+    const div = document.createElement('div');
+    div.className = 'world-item ' + (isDone?'w-done':isActive?'w-active':isLocked?'w-locked':'w-locked');
+    div.innerHTML = `<div class="wi-inner">
+      <div class="wi-num ${isDone?'wn-done':isActive?'wn-active':'wn-locked'}">${isDone?'✓':isLocked?'🔒':(i+1)}</div>
+      <div><div class="wi-name" ${isActive?'style="color:#c084fc"':''}>${lv.name}</div><div class="wi-desc">${lv.desc}</div>
+      ${!isLocked?`<div class="wi-prog"><div class="wip-bar"><div class="wip-fill" style="width:${Math.round(lv.missionsDone/lv.missions*100)}%;background:${isDone?'var(--green)':isActive?'var(--purple)':'var(--t3)'}"></div></div><span class="wip-txt" style="color:${isDone?'var(--green)':isActive?'var(--purple)':'var(--t3)'}">${lv.missionsDone}/${lv.missions}</span></div>`:''}</div>
+    </div>`;
+    if(!isLocked) {
+      let dots = '<div class="mission-dots">';
+      for(let m=0;m<lv.missions;m++) {
+        const mDone = m < lv.missionsDone;
+        const mActive = isActive && m === state.currentMission;
+        dots += `<div class="md ${mDone?'md-done':mActive?'md-active':'md-lock'}">${m+1}</div>`;
+      }
+      dots += '</div>';
+      div.innerHTML += dots;
+    }
+    map.appendChild(div);
+  });
+}
+
+function renderCurrentMission() {
+  const main = document.getElementById('ga-main');
+  const m = missions[state.currentMission];
+  main.innerHTML = '';
+
+  // Update Python tip in info panel
+  if(m.pyTip) {
+    const tipTitle = document.getElementById('gi-tip-title');
+    const tipBody = document.getElementById('gi-tip-body');
+    if(tipTitle) tipTitle.textContent = m.pyTip.title;
+    if(tipBody) tipBody.innerHTML = m.pyTip.body;
+  }
+  document.getElementById('gi-learn-section').style.display = 'none';
+
+  const banner = document.createElement('div');
+  banner.className = 'mission-banner animate-in';
+  banner.innerHTML = `
+    <div class="mission-icon">${m.emoji}</div>
+    <div>
+      <div class="mission-lbl">Mission ${state.currentMission+1}</div>
+      <div class="mission-name">${m.title}</div>
+      <div class="mission-desc">${m.desc}</div>
+      <div class="mission-rewards">
+        <span class="rew-chip" style="background:#201505;color:var(--amber);border:1px solid var(--amber2)">+${m.xp} XP</span>
+        <span class="rew-chip" style="background:#041410;color:var(--green);border:1px solid #1c5030">Skill point</span>
+        <span class="rew-chip" style="background:#0d0820;color:var(--purple);border:1px solid var(--purple2)">📚 Learn mode</span>
+      </div>
+    </div>`;
+  main.appendChild(banner);
+
+  const ccard = document.createElement('div');
+  ccard.className = 'challenge-card animate-in';
+  ccard.innerHTML = `
+    <div class="cc-head">
+      <span class="cc-title">Cursed Python Code</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--t3)">challenge_${state.currentMission+1}.py</span>
+      <span class="bug-badge ml-auto">1 BUG</span>
+    </div>
+    <div class="cc-code">${m.code}</div>`;
+  main.appendChild(ccard);
+
+  const fcard = document.createElement('div');
+  fcard.className = 'fix-card animate-in';
+  fcard.innerHTML = `<div class="fc-head">Choose the correct Python fix for the highlighted line</div><div class="fc-options" id="fc-options"></div>`;
+  main.appendChild(fcard);
+
+  const opts = document.getElementById('fc-options');
+  const letters = ['A','B','C','D'];
+  m.options.forEach((opt,i) => {
+    const div = document.createElement('div');
+    div.className = 'fix-opt';
+    div.id = 'opt-'+i;
+    div.innerHTML = `<div class="fix-key">${letters[i]}</div><div class="fix-text">${opt.text}</div><div class="fix-result" id="opt-res-${i}"></div>`;
+    div.onclick = () => { if(!state.missionAnswered) answerMission(i, opt.correct, m); };
+    opts.appendChild(div);
+  });
+
+  if(state.hintRevealed) document.getElementById('hint-text').textContent = m.hint;
+}
+
+async function answerMission(idx, correct, m) {
+  if(state.missionAnswered) return;
+  state.missionAnswered = true;
+
+  const letters = ['A','B','C','D'];
+  m.options.forEach((opt,i) => {
+    const el = document.getElementById('opt-'+i);
+    const res = document.getElementById('opt-res-'+i);
+    if(opt.correct) { el.classList.add('fo-correct'); res.innerHTML = '<span style="color:var(--green)">✓</span>'; }
+    if(i === idx && !opt.correct) { el.classList.add('fo-wrong'); res.innerHTML = '<span style="color:var(--red)">✗</span>'; }
+  });
+
+  if(correct) {
+    const xpEarned = m.xp * state.combo;
+    state.gameScore += xpEarned;
+    state.combo = Math.min(state.combo + 1, 6);
+    state.xp += Math.floor(xpEarned / 2);
+    state.levelXp = Math.min(500, state.levelXp + m.xp);
+
+    const main = document.getElementById('ga-main');
+    const exp = document.createElement('div');
+    exp.className = 'animate-in';
+    exp.style.cssText = 'background:#030e08;border:1px solid #235c38;border-radius:var(--r8);padding:12px 14px;font-size:12px;color:#6ee7b7;line-height:1.6;';
+    exp.innerHTML = m.explain + `<br><span style="color:var(--amber);font-weight:700">+${xpEarned} XP (×${state.combo-1} combo)</span>`;
+    main.appendChild(exp);
+
+    // Show AI deep explanation in the info panel
+    showGameLearnPanel(m);
+
+    const acts = document.createElement('div');
+    acts.style.cssText = 'display:flex;gap:8px;';
+    acts.innerHTML = `<button class="btn-accept" onclick="nextMission()" style="flex:1">Next Mission →</button>
+      <button class="btn-reject" onclick="resetMission()">Replay</button>`;
+    main.appendChild(acts);
+
+    showToast(`✓ Correct! +${xpEarned} XP · ×${state.combo} combo!`, 'success');
+    updateGameUI(); updateXP();
+    state.hintRevealed = false;
+
+    // Update skill for the topic
+    if(m.title.includes('SQL')) state.skills.sql = Math.min(5, state.skills.sql+1);
+    if(m.title.includes('Type')) state.skills.types = Math.min(5, state.skills.types+1);
+    if(m.title.includes('Race') || m.title.includes('Null')) state.skills.exceptions = Math.min(5, state.skills.exceptions+1);
+    renderSkills();
+  } else {
+    state.hp = Math.max(0, state.hp - 1);
+    state.combo = 1;
+    showToast('✗ Wrong answer — -1 HP · combo reset', 'error');
+    const main = document.getElementById('ga-main');
+    const exp = document.createElement('div');
+    exp.className = 'animate-in';
+    exp.style.cssText = 'background:#0e0303;border:1px solid #662222;border-radius:var(--r8);padding:12px 14px;font-size:12px;color:#f7a0a0;line-height:1.6;';
+    exp.innerHTML = `<strong style="color:var(--red)">✗ Incorrect.</strong> Python tip: <em>${m.hint}</em>`;
+    main.appendChild(exp);
+    const acts = document.createElement('div');
+    acts.style.cssText = 'display:flex;gap:8px;';
+    acts.innerHTML = `<button class="btn-accept" onclick="nextMission()" style="flex:1;background:#0b1c3d;border-color:var(--blue2);color:var(--blue);">Skip Mission</button>
+      <button class="btn-accept" onclick="resetMission()">Try Again</button>`;
+    main.appendChild(acts);
+    updateGameUI();
+    if(state.hp === 0) setTimeout(() => showModal('💀 Game Over!', 'Bugs got you this time! Score: '+state.gameScore+' pts.', 'Restart', resetMission), 800);
+  }
+}
+
+function showGameLearnPanel(m) {
+  // Show the Python tip and a deeper explanation in the right panel
+  const section = document.getElementById('gi-learn-section');
+  const content = document.getElementById('gi-learn-content');
+  section.style.display = 'block';
+  content.innerHTML = `<div style="font-size:11px;color:var(--t1);font-weight:600;margin-bottom:6px">${m.pyTip ? m.pyTip.title : 'Python Concept'}</div>
+<div style="font-size:11px;color:var(--t2);line-height:1.6;">${m.pyTip ? m.pyTip.body : m.explain}</div>
+<div style="margin-top:8px;padding:6px 8px;background:var(--bg3);border-radius:4px;font-size:10px;color:var(--purple)">Go to Editor → 📚 Learn for a full AI-generated lesson with quiz</div>`;
+}
+
+function nextMission() {
+  levels[state.currentLevel].missionsDone = Math.min(levels[state.currentLevel].missions, state.currentMission + 1);
+  state.currentMission = (state.currentMission + 1) % missions.length;
+  state.missionAnswered = false;
+  state.hintRevealed = false;
+  resetTimer();
+  renderGame();
+}
+
+function resetMission() {
+  state.missionAnswered = false;
+  state.hintRevealed = false;
+  resetTimer();
+  renderCurrentMission();
+}
+
+function useItem(type) {
+  if(type === 'hint') {
+    state.hintRevealed = true;
+    document.getElementById('hint-text').textContent = missions[state.currentMission].hint;
+    showToast('💡 Python hint revealed','info');
+  } else if(type === 'freeze') {
+    state.timerSeconds += 30;
+    showToast('⏱ Time Freeze! +30 seconds','success');
+  } else if(type === 'skip') {
+    nextMission();
+    showToast('⏭ Mission skipped','info');
+  }
+}
+
+function startTimer() {
+  state.timerInterval = setInterval(() => {
+    if(state.currentPage !== 'game') return;
+    state.timerSeconds = Math.max(0, state.timerSeconds - 1);
+    const m2 = Math.floor(state.timerSeconds / 60).toString().padStart(2,'0');
+    const s = (state.timerSeconds % 60).toString().padStart(2,'0');
+    const el = document.getElementById('game-timer');
+    if(el) el.textContent = m2+':'+s;
+    if(state.timerSeconds === 0 && !state.missionAnswered) {
+      state.hp = Math.max(0, state.hp - 1);
+      resetTimer();
+      showToast('⏱ Time\'s up! -1 HP','error');
+      updateGameUI();
+    }
+  }, 1000);
+}
+
+function resetTimer() { state.timerSeconds = 150; }
+
+function renderGameInfo() {
+  const bc = document.getElementById('ga-breadcrumb');
+  if(bc) bc.innerHTML = `Level <span>${state.currentLevel+1}</span> · ${levels[state.currentLevel].name} · Mission <span>${state.currentMission+1}</span> of ${levels[state.currentLevel].missions}`;
+  const diff = document.getElementById('ga-diff');
+  if(diff) { diff.textContent = levels[state.currentLevel].diff; diff.className = 'diff-chip ' + (levels[state.currentLevel].diff === 'HARD'||levels[state.currentLevel].diff==='EXPERT'?'dc-hard':'dc-normal'); }
+  const title = document.getElementById('gi-level-name');
+  if(title) title.textContent = levels[state.currentLevel].name;
+  const dots = document.getElementById('mission-step-dots');
+  if(dots) {
+    dots.innerHTML = '';
+    for(let i=0;i<levels[state.currentLevel].missions;i++) {
+      const d = document.createElement('div');
+      const isDone = i < levels[state.currentLevel].missionsDone;
+      const isActive = i === state.currentMission;
+      d.className = 'msd ' + (isDone?'msd-done':isActive?'msd-active':'msd-lock');
+      d.textContent = i+1;
+      dots.appendChild(d);
+    }
+  }
+  const xpLabel = document.getElementById('level-xp-display');
+  const xpBar = document.getElementById('level-xp-bar');
+  if(xpLabel) xpLabel.textContent = state.levelXp + ' / 500';
+  if(xpBar) xpBar.style.width = (state.levelXp/500*100)+'%';
+}
+
+function updateGameUI() {
+  const hp = document.getElementById('hp-hearts');
+  if(hp) hp.textContent = '❤️'.repeat(state.hp) + '🖤'.repeat(state.maxHp - state.hp);
+  const scoreEl = document.getElementById('game-score');
+  if(scoreEl) scoreEl.textContent = state.gameScore.toLocaleString();
+  const comboMult = document.getElementById('combo-mult');
+  if(comboMult) comboMult.textContent = state.combo;
+  const comboDis = document.getElementById('combo-display');
+  if(comboDis) comboDis.textContent = state.combo;
+  const comboBar = document.getElementById('combo-bar-fill');
+  if(comboBar) comboBar.style.width = ((state.combo-1)/5*100)+'%';
+  const comboHint = document.getElementById('combo-hint');
+  if(comboHint) comboHint.textContent = state.combo >= 5 ? '🔥 MAX COMBO!' : `${5-state.combo+1} more to ×${state.combo+1} combo`;
+  const unlockBar = document.getElementById('unlock-bar');
+  const unlockLbl = document.getElementById('unlock-label');
+  if(unlockBar) unlockBar.style.width = Math.min(100, state.gameScore/2500*100)+'%';
+  if(unlockLbl) unlockLbl.textContent = state.gameScore + ' / 2,500';
+  renderGameInfo();
+}
+
+function renderSkills() {
+  const el = document.getElementById('skills-display');
+  if(!el) return;
+  const skills = [
+    {ico:'🔐', name:'SQL Safety', key:'sql', max:5, color:'#5b8ef0'},
+    {ico:'🛡️', name:'Exceptions', key:'exceptions', max:5, color:'#3dd6a3'},
+    {ico:'⚡', name:'Types', key:'types', max:5, color:'#f5a623'},
+    {ico:'🔮', name:'Fragility', key:'fragility', max:5, color:'#9b6cf5'},
+  ];
+  el.innerHTML = skills.map(s => `
+    <div class="skill-row-g">
+      <div class="sr-icon" style="background:var(--bg4);border:1px solid var(--border)">${s.ico}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;color:var(--t2)">${s.name}</div>
+        <div class="sr-bar"><div class="sr-fill" style="width:${state.skills[s.key]/s.max*100}%;background:${s.color}"></div></div>
+      </div>
+      <span style="font-size:10px;color:var(--t3);font-family:var(--font-mono);min-width:28px;text-align:right">Lv${state.skills[s.key]}</span>
+    </div>`).join('');
+}
+
+function renderLeaderboard() {
+  const el = document.getElementById('leaderboard-display');
+  if(!el) return;
+  const lb = [
+    {name:'@sam_dev', score:3840, rank:1},
+    {name:'@priya_k', score:3210, rank:2},
+    {name:'@luca.ry', score:2980, rank:3},
+    {name:'you (alex)', score:state.gameScore, rank:4, me:true},
+    {name:'@codebot9', score:1990, rank:5},
+  ];
+  lb.sort((a,b)=>b.score-a.score);
+  lb.forEach((r,i)=>r.rank=i+1);
+  el.innerHTML = lb.map(r => `
+    <div class="lb-row-g ${r.me?'me-lb':''}">
+      <span class="lb-rank-g" style="${r.rank===1?'color:var(--amber)':r.me?'color:var(--purple)':''}">${r.rank}</span>
+      <span class="lb-name-g" style="${r.me?'color:var(--t1);font-weight:700':''}">${r.name}</span>
+      <span class="lb-score-g">${r.score.toLocaleString()}</span>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════ */
+async function updateDashboard(){
+
+let res = await fetch("http://127.0.0.1:5000/stats");
+
+let data = await res.json();
+
+document.getElementById("PUT_ID_1").innerText = data.reviews;
+document.getElementById("PUT_ID_2").innerText = data.fragility;
+document.getElementById("PUT_ID_3").innerText = data.prediction;
+
+}
+
+function updateHomeStats() {
+  document.getElementById('h-reviewed').textContent = state.reviewed;
+  document.getElementById('h-fixed').textContent = state.fixed.toLocaleString();
+  document.getElementById('h-fragility').textContent = state.fragility.toFixed(2);
+}
+
+function updateXP() {
+  document.getElementById('xp-display').textContent = state.xp.toLocaleString() + ' XP';
+  document.getElementById('streak-count').textContent = state.streak;
+}
+
+/* ═══════════════════════════════════════════════
+   ACTIVITY LOG
+═══════════════════════════════════════════════ */
+const activityLog = [];
+function addActivity(file, agent, type, status) {
+  activityLog.unshift({file, agent, type, status});
+  const feed = document.getElementById('activity-feed');
+  if(!feed) return;
+  const color = status==='Fixed'||status==='Clean'?'var(--green)':status==='Critical'?'var(--red)':'var(--amber)';
+  const pillClass = status==='Fixed'||status==='Clean'?'sp-ok':status==='Critical'?'sp-err':'sp-warn';
+  const row = document.createElement('div');
+  row.className = 'ac-row animate-in';
+  row.innerHTML = `<div class="ac-dot" style="background:${color}"></div>
+    <div class="ac-text">${file} · <span style="color:var(--t1)">${type} — ${status}</span></div>
+    <span class="status-pill ${pillClass}">${status}</span>
+    <div class="ac-time" style="margin-left:8px">just now</div>`;
+  feed.insertBefore(row, feed.firstChild);
+  if(feed.children.length > 6) feed.removeChild(feed.lastChild);
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST & MODAL
+═══════════════════════════════════════════════ */
+let toastTimeout;
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show toast-'+type;
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function showModal(title, body, btnText, action) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  document.getElementById('modal-action-btn').textContent = btnText || 'OK';
+  document.getElementById('modal-action-btn').onclick = () => { closeModal(); if(action) action(); };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+function init() {
+  renderEditor();
+  updateXP();
+}
+init();
+
+function showReviewResult(text) {
+
+let panel = document.querySelector(".run-output");
+
+if(panel){
+    panel.innerText = text;
+}
+
+}
+window.alert = function(msg) {
+    document.querySelector(".run-output").innerText = msg;
+}
+
+async function fixWithBackend() {
+
+let code = document.getElementById("editor").value;
+
+let res = await fetch("http://127.0.0.1:5000/fix", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        code: code
+    })
+});
+
+let data = await res.json();
+
+document.getElementById("output-placeholder").style.display = "none";
+document.getElementById("output-run").style.display = "none";
+document.getElementById("output-diff").style.display = "flex";
+
+document.getElementById("diff-old").innerText = data.old;
+document.getElementById("diff-new").innerText = data.new;
+document.getElementById("diff-explain").innerText = data.explain;
+
+}
+function openOutputPanel() {
+
+  document.getElementById("output-run").style.display = "block";
+
+}
+function updateDashboard() {
+
+  // stats numbers
+
+  animateNumber("h-reviewed", 0, 247, 600);
+  animateNumber("h-fixed", 0, 1084, 600);
+  animateNumber("h-fragility", 0, 34, 600, true);
+
+
+  // level bars
+
+  animateBar(".perf-fill", 70);
+  animateBar(".combo-fill", 60);
+
+
+  // agent bars
+
+  animateBar(".mf-green", 90);
+  animateBar(".mf-amber", 65);
+  animateBar(".mf-red", 30);
+
+}
+function startDashboardAnimation() {
+
+  animateStats();
+
+  animateBars();
+
+  animateAgents();
+
+}
+function animateNumber(id, start, end, speed, decimal=false) {
+
+  let obj = document.getElementById(id);
+
+  if(!obj) return;
+
+  let current = start;
+
+  let step = Math.ceil((end-start)/20);
+
+  let timer = setInterval(() => {
+
+    current += step;
+
+    if(current >= end) {
+      current = end;
+      clearInterval(timer);
+    }
+
+    if(decimal)
+      obj.innerText = (current/100).toFixed(2);
+    else
+      obj.innerText = current;
+
+  }, speed/20);
+
+}
+function animateStats() {
+
+  let stats = document.querySelectorAll(".stat-val");
+
+  stats.forEach((el, i) => {
+
+    let target = parseInt(el.innerText) || 100;
+
+    let value = 0;
+
+    el.innerText = "0";
+
+    let timer = setInterval(() => {
+
+      value += Math.ceil(target / 20);
+
+      if(value >= target) {
+        value = target;
+        clearInterval(timer);
+      }
+
+      el.innerText = value;
+
+    }, 30);
+
+  });
+
+}
+function animateBars() {
+
+  let bars = document.querySelectorAll(".perf-fill, .bc-bar");
+
+  bars.forEach(bar => {
+
+    let h = Math.floor(Math.random()*90)+10;
+
+    bar.style.height = "0%";
+
+    setTimeout(() => {
+
+      bar.style.height = h + "%";
+
+    }, 200);
+
+  });
+}
+
+</script>
+</body>
+</html>
