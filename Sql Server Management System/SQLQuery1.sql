@@ -1,0 +1,9 @@
+CREATE DATABASE aicra;
+GO
+
+USE aicra;
+
+CREATE TABLE code(
+ id INT IDENTITY(1,1) PRIMARY KEY,
+ text NVARCHAR(MAX)
+);
