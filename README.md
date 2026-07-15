@@ -22,7 +22,7 @@ This project was developed to simplify the code review process by providing inst
 
 
 ##  Author
-**Krithika K.**
+**Krithika K**
 
 - BCA Graduate
 - Aspiring Software Developer
